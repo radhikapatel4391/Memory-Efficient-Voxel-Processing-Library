@@ -3,7 +3,7 @@ import numpy as np
 dirname = '../data/'
 filename = dirname + 'gyroidUniform.npy'
 
-# Map numpy to file 
+# Map numpy to .npy file 
 np_map = np.memmap(filename, dtype=np.float64, 
                    mode='r', shape=(200,200,200))
 
