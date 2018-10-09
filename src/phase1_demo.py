@@ -1,4 +1,3 @@
-import dask.array as da
 from sys import getsizeof
 from scipy import ndimage
 import numpy as np
@@ -15,13 +14,17 @@ new_img = new_img.transpose()
 
 # Compressed row Storage
 CRS = sparse.csc_matrix(new_img)
+sparse.save_npz("CRS.npz", CRS)
+CRS_RAM = sparse.load_npz("CRS.npz")
 
 # Extract 2d blocks from CRS
-block_2d = CRS[:,0:5000].todense()
+block_size = 25
+index = block_size * a.shape[0]
+block_2d = CRS_RAM[:,0:index].todense()
 block_2d = block_2d.T
 
 # Convert 2d blocks to 3d
-mylist = np.split(block_2d, 25)
+mylist = np.split(block_2d, block_size)
 block_3d = np.ma.dstack(mylist)
 block_3d = np.rollaxis(block_3d,-1)
 
