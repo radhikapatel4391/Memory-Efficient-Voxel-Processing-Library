@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scipy import sparse
 from scipy import ndimage
 
@@ -22,11 +23,23 @@ class VoxelProcessing:
         return arr_2d
     
     def compressed_storage(self, arr_2d):
+        directory = 'compressed'
         CRS = sparse.csr_matrix(arr_2d)
-        sparse.save_npz("CRS.npz", CRS)
-        CRS_RAM = sparse.load_npz("CRS.npz")
-        return CRS_RAM
-    
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        sparse.save_npz("compressed/CRS.npz", CRS)
+   
+    def load_compressed(self):
+        filename = "compressed/CRS.npz"
+        try:
+            CRS_RAM = open(filename, 'r')
+        except:
+            print('Cannot open', filename)
+            return 0
+        else:
+            CRS_RAM = sparse.load_npz(filename).todense()
+            return CRS_RAM
+            
     def get_no_of_blocks(self, arr_2d):
         arr_int = []
         for i in range(1, 11):
@@ -34,6 +47,8 @@ class VoxelProcessing:
             if float(block_size).is_integer():
                 arr_int.append(i)
         block_size = arr_int[-1]
+        print("No of blocks = ", block_size)
+        print()
         return block_size
 
     def CRS_operation(self, CRS, n_blocks, operation):
@@ -41,8 +56,9 @@ class VoxelProcessing:
         end_index = int(CRS.shape[1] / n_blocks)
         jump = int(CRS.shape[1] / n_blocks)
         for i in range(0, n_blocks):
-            print(start_index, end_index)
-            block_2d = CRS[:,start_index:end_index].todense()
+            print("Start Index = ",start_index)
+            print("End Index = ", end_index)
+            block_2d = CRS[:,start_index:end_index] #.todense()
             block_2d = block_2d.T
             start_index = end_index
             end_index = end_index + jump
@@ -56,26 +72,27 @@ class VoxelProcessing:
             value = block_2d.shape[0] / divide[k]
             if float(value).is_integer():
                 arr_int.append(divide[k])
-        #print(arr_int)
         n_splits = arr_int[-1]       
         
-        print(n_splits, block_2d.shape)
+        #print(n_splits, block_2d.shape)
         mylist = np.split(block_2d, n_splits)
         block_3d = np.ma.dstack(mylist)
         block_3d = np.rollaxis(block_3d,-1)
         if operation == 'dilation':
-            print("Performing Dilation")
+            print("Performing Dilation on blocks ", i)
             self.block_dilation(i, block_3d, self.struct_element)              
         if operation == 'erosion':
-            print("Performing Erosion")
+            print("Performing Erosion on block ", i)
             self.block_erosion(i, block_3d, self.struct_element)
     
     def block_dilation(self, i, block_3d, struct_element):
-        print(i)
         dilated = ndimage.grey_dilation(block_3d, structure=struct_element)
         np.save("dilated_block" + str(i) + ".npy", dilated)
+        print("Block Shape = ", dilated.shape)
+        print()
         
     def block_erosion(self, i, block_3d, struct_element):
-        dilated = ndimage.grey_erosion(block_3d, structure=struct_element)
-        np.save("erosion_block" + str(i) + ".npy", dilated)
-        print(dilated.shape)
+        eroded = ndimage.grey_erosion(block_3d, structure=struct_element)
+        np.save("erosion_block" + str(i) + ".npy", eroded)
+        print("Block Shape = ", eroded.shape)
+        print()
