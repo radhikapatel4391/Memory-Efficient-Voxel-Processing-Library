@@ -64,8 +64,8 @@ class VoxelProcessing:
             
             # Convert Numpy Matrix object to Numpy Array
             block_2d = np.squeeze(np.asarray(block_2d))
-            print("Block Memory size = ", getsizeof(block_2d))
-            print("Block Type = ", type(block_2d))
+            print("Block_2d Memory size = ", getsizeof(block_2d))
+            print("Block_2d Type = ", type(block_2d))
             block_2d = block_2d.T
             start_index = end_index
             end_index = end_index + jump
@@ -83,8 +83,10 @@ class VoxelProcessing:
         
         #print(n_splits, block_2d.shape)
         mylist = np.split(block_2d, n_splits)
-        block_3d = np.ma.dstack(mylist)
+        block_3d = np.dstack(mylist)
         block_3d = np.rollaxis(block_3d,-1)
+        print("Block_3d Memory size = ", getsizeof(block_3d))
+        print("Block_3d Type = ", type(block_2d))
         if operation == 'dilation':
             print("Performing Dilation on blocks ", i)
             self.block_dilation(i, block_3d, self.struct_element)              
@@ -95,6 +97,7 @@ class VoxelProcessing:
     def block_dilation(self, i, block_3d, struct_element):
         dilated = ndimage.grey_dilation(block_3d, structure=struct_element)
         np.save("dilated_block" + str(i) + ".npy", dilated)
+        print("Dilated_block size =",  getsizeof(dilated))
         print("Block Shape = ", dilated.shape)
         print()
         
