@@ -39,6 +39,7 @@ class VoxelProcessing:
             return 0
         else:
             CRS_RAM = sparse.load_npz(filename).todense()
+            # os.remove(filename)
             # Returns a NumPy matrix object
             return CRS_RAM
             
