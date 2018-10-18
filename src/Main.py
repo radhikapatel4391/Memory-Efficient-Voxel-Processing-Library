@@ -1,11 +1,12 @@
 from VoxelProcessing import VoxelProcessing
+from sys import getsizeof
 import numpy as np
 
 if __name__ == '__main__':
     
     # Parameters
-    # test = np.zeros((195,215,255))
-    # np.save("test44.npy", test)
+    #test = np.zeros((1000,1000,1000))
+    #np.save("test03.npy", test)
     filename = 'gyroidUniform.npy'
     dimension = [200, 200, 200]
     structure = np.zeros((3,3,3))

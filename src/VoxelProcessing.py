@@ -2,6 +2,7 @@ import numpy as np
 import os
 from scipy import sparse
 from scipy import ndimage
+from sys import getsizeof
 
 class VoxelProcessing:
     
@@ -10,7 +11,7 @@ class VoxelProcessing:
         self.y_dim = dimension[1]
         self.z_dim = dimension[2]
         self.struct_element = structure
-        self.arr_map = np.memmap(filename, dtype=np.uint8, 
+        self.arr_map = np.memmap(filename, dtype=np.float64, 
                    mode='r', shape=(self.x_dim,self.y_dim,self.z_dim))
         
     def print_shape(self):
@@ -38,6 +39,7 @@ class VoxelProcessing:
             return 0
         else:
             CRS_RAM = sparse.load_npz(filename).todense()
+            # Returns a NumPy matrix object
             return CRS_RAM
             
     def get_no_of_blocks(self, arr_2d):
@@ -58,7 +60,12 @@ class VoxelProcessing:
         for i in range(0, n_blocks):
             print("Start Index = ",start_index)
             print("End Index = ", end_index)
-            block_2d = CRS[:,start_index:end_index] #.todense()
+            block_2d = CRS[:,start_index:end_index]
+            
+            # Convert Numpy Matrix object to Numpy Array
+            block_2d = np.squeeze(np.asarray(block_2d))
+            print("Block Memory size = ", getsizeof(block_2d))
+            print("Block Type = ", type(block_2d))
             block_2d = block_2d.T
             start_index = end_index
             end_index = end_index + jump
