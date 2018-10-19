@@ -38,8 +38,8 @@ class VoxelProcessing:
             print('Cannot open', filename)
             return 0
         else:
-            CRS_RAM = sparse.load_npz(filename).todense()
-            # os.remove(filename)
+            CRS_RAM = sparse.load_npz(filename)
+            os.remove(filename)
             # Returns a NumPy matrix object
             return CRS_RAM
             
@@ -61,10 +61,10 @@ class VoxelProcessing:
         for i in range(0, n_blocks):
             print("Start Index = ",start_index)
             print("End Index = ", end_index)
-            block_2d = CRS[:,start_index:end_index]
+            block_2d = CRS[:,start_index:end_index].toarray()
             
             # Convert Numpy Matrix object to Numpy Array
-            block_2d = np.squeeze(np.asarray(block_2d))
+            # block_2d = np.squeeze(np.asarray(block_2d))
             print("Block_2d Memory size = ", getsizeof(block_2d))
             print("Block_2d Type = ", type(block_2d))
             block_2d = block_2d.T
@@ -87,7 +87,7 @@ class VoxelProcessing:
         block_3d = np.dstack(mylist)
         block_3d = np.rollaxis(block_3d,-1)
         print("Block_3d Memory size = ", getsizeof(block_3d))
-        print("Block_3d Type = ", type(block_2d))
+        print("Block_3d Type = ", type(block_3d))
         if operation == 'dilation':
             print("Performing Dilation on blocks ", i)
             self.block_dilation(i, block_3d, self.struct_element)              
