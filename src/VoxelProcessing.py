@@ -12,8 +12,7 @@ class VoxelProcessing:
         self.y_dim = dimension[1]
         self.z_dim = dimension[2]
         self.struct_element = structure
-        self.arr_map = np.memmap(filename, dtype=np.float64, 
-                   mode='r', shape=(self.x_dim,self.y_dim,self.z_dim))
+        self.arr_map = np.load('gyroidUniform.npy', mmap_mode="r+")
         
     def print_shape(self):
         print(self.arr_map.shape)
@@ -120,3 +119,4 @@ class VoxelProcessing:
             merging = np.memmap(filename, dtype=np.float32, 
                                 mode='r', shape=(self.x_dim, self.y_dim, self.z_dim))
             np.save('output/Merged.npy', merging)
+            
