@@ -5,8 +5,6 @@ import numpy as np
 if __name__ == '__main__':
     
     # Parameters
-    #test = np.zeros((1000,1000,1000))
-    #np.save("test03.npy", test)
     filename = 'gyroidUniform.npy'
     dimension = [200, 200, 200]
     structure = np.zeros((3,3,3))
@@ -19,3 +17,4 @@ if __name__ == '__main__':
     CRS = data.load_compressed()
     no_of_blocks = data.get_no_of_blocks(arr_2d)
     data.CRS_operation(CRS, no_of_blocks, operation)
+    data.merge_blocks()
