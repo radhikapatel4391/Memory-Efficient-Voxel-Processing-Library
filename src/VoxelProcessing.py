@@ -3,7 +3,6 @@ import os
 from scipy import sparse
 from scipy import ndimage
 from sys import getsizeof
-import pickle
 
 class VoxelProcessing:
     
@@ -12,7 +11,7 @@ class VoxelProcessing:
         self.y_dim = dimension[1]
         self.z_dim = dimension[2]
         self.struct_element = structure
-        self.arr_map = np.load('gyroidUniform.npy', mmap_mode="r+")
+        self.arr_map = np.load('gyroidUniform.npy', mmap_mode="r")
         
     def print_shape(self):
         print(self.arr_map.shape)
@@ -59,7 +58,7 @@ class VoxelProcessing:
         start_index = 0
         end_index = int(CRS.shape[1] / n_blocks)
         jump = int(CRS.shape[1] / n_blocks)
-        self.f_handle = open('output/blocks.pkl', 'wb')
+        self.f_handle = open('output/binary', 'wb')
         for i in range(0, n_blocks):
             print("Start Index = ",start_index)
             print("End Index = ", end_index)
@@ -97,7 +96,7 @@ class VoxelProcessing:
     
     def block_dilation(self, i, block_3d, struct_element):
         dilated = ndimage.grey_dilation(block_3d, structure=struct_element)        
-        pickle.dump(dilated, self.f_handle)        
+        dilated.tofile(self.f_handle)
         print("Dilated_block size =",  getsizeof(dilated))
         print("Block Shape = ", dilated.shape)
         print()
@@ -109,7 +108,7 @@ class VoxelProcessing:
         print()
         
     def merge_blocks(self):
-        filename = "output/blocks.pkl"
+        filename = "output/binary"
         try:
             merging = open(filename, 'r')
         except:
@@ -117,6 +116,6 @@ class VoxelProcessing:
             return 0
         else:
             merging = np.memmap(filename, dtype=np.float32, 
-                                mode='r', shape=(self.x_dim, self.y_dim, self.z_dim))
-            np.save('output/Merged.npy', merging)
+                                mode='r', shape=(self.x_dim,self.y_dim,self.z_dim))
             
+            np.save('output/Merged.npy', merging)
