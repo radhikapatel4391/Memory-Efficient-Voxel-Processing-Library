@@ -2,7 +2,6 @@ import numpy as np
 import os
 from scipy import sparse
 from scipy import ndimage
-from sys import getsizeof
 
 class VoxelProcessing:
     
@@ -13,7 +12,7 @@ class VoxelProcessing:
         self.struct_element = structure
         self.arr_map = np.load('gyroidUniform.npy', mmap_mode="r")
         
-    def print_shape(self):
+    def print_arr_shape(self):
         print(self.arr_map.shape)
         
     def convert_to_2d(self):
@@ -32,6 +31,9 @@ class VoxelProcessing:
             os.makedirs(output)
         sparse.save_npz("compressed/CRS.npz", CRS)
    
+    '''Returns sparse matrix with Non-zero stored 
+    elements in Compressed Sparse Row format'''
+    
     def load_compressed(self):
         filename = "compressed/CRS.npz"
         try:
@@ -54,17 +56,17 @@ class VoxelProcessing:
         print()
         return block_size
 
-    def CRS_operation(self, CRS, n_blocks, operation):
+    def Morphology(self, CRS, n_blocks, operation):
         start_index = 0
         end_index = int(CRS.shape[1] / n_blocks)
         jump = int(CRS.shape[1] / n_blocks)
         self.f_handle = open('output/binary', 'wb')
         for i in range(0, n_blocks):
-            print("Start Index = ",start_index)
-            print("End Index = ", end_index)
+            # print("Start Index = ",start_index)
+            # print("End Index = ", end_index)
             block_2d = CRS[:,start_index:end_index].toarray()
-            print("Block_2d Memory size = ", getsizeof(block_2d))
-            print("Block_2d Type = ", type(block_2d))
+            # print("Block_2d Memory size = ", getsizeof(block_2d))
+            # print("Block_2d Type = ", type(block_2d))
             block_2d = block_2d.T
             start_index = end_index
             end_index = end_index + jump
@@ -88,27 +90,27 @@ class VoxelProcessing:
         # print("Block_3d Memory size = ", getsizeof(block_3d))
         # print("Block_3d Type = ", type(block_3d))
         if operation == 'dilation':
-            print("Performing Dilation on blocks ", i)
-            self.block_dilation(i, block_3d, self.struct_element)              
+            print("Performing Dilation on block ", i)
+            self.block_dilation(block_3d, self.struct_element)              
         if operation == 'erosion':
             print("Performing Erosion on block ", i)
-            self.block_erosion(i, block_3d, self.struct_element)
+            self.block_erosion(block_3d, self.struct_element)
     
-    def block_dilation(self, i, block_3d, struct_element):
+    def block_dilation(self, block_3d, struct_element):
         dilated = ndimage.grey_dilation(block_3d, structure=struct_element)        
         dilated.tofile(self.f_handle)
-        print("Dilated_block size =",  getsizeof(dilated))
-        print("Block Shape = ", dilated.shape)
-        print()
+        # print("Dilated_block size =",  getsizeof(dilated))
+        # print("Block Shape = ", dilated.shape)
         
-    def block_erosion(self, i, block_3d, struct_element):
+    def block_erosion(self, block_3d, struct_element):
         eroded = ndimage.grey_erosion(block_3d, structure=struct_element)
-        np.save("erosion_block" + str(i) + ".npy", eroded)
-        print("Block Shape = ", eroded.shape)
-        print()
+        eroded.tofile(self.f_handle)
+        # print("Block Shape = ", eroded.shape)
+        # print()
         
     def merge_blocks(self):
         filename = "output/binary"
+        output_filename = "output/Merged.npy"
         try:
             merging = open(filename, 'r')
         except:
@@ -118,4 +120,6 @@ class VoxelProcessing:
             merging = np.memmap(filename, dtype=np.float32, 
                                 mode='r', shape=(self.x_dim,self.y_dim,self.z_dim))
             
-            np.save('output/Merged.npy', merging)
+            np.save(output_filename, merging)
+            print()
+            print("Blocks successfully merged to ", output_filename)
