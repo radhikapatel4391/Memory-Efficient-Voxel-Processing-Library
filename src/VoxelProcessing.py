@@ -1,56 +1,132 @@
 import numpy as np
-import os
 from scipy import sparse
 from scipy import ndimage
 
-class VoxelProcessing:
-    #npy file
-    def __init__(self, filename,blockSize=50):        
-        self.arr_map = np.load(filename, mmap_mode="r")
-		self.x_dim = arr_map.shape[0]
-        self.y_dim = arr_map.shape[1]
-        self.z_dim = arr_map.shape[2]
-		self.blockSize = blockSize
-        
+
+#Global variables for file....which will reset by setGlobalValue function based on image..
+X,Y,Z = 200,200,200
+SPARSED = True
+BLOCKSIZE = 20
+NBLOCKS = 10
+FG = 1
+
+
+def getDataFromBinaryFile(filename,shape=(X,Y,Z)):
+	try:
+		merging = open(filename, 'r')		
+	except:
+		print('Cannot open', filename)
+		return 0
+	else:
+		#merging = np.memmap(filename,shape=shape,dtype=np.float64)
+		#np.save("output.npy", merging)
+		return np.memmap(filename,shape=shape,dtype=np.float64)
 		
-	def convert_to_2d(self):
-        arr_2d = self.arr_map.reshape((self.arr_map.shape[0]*
-                             self.arr_map.shape[1]), self.arr_map.shape[2])
-        arr_2d = arr_2d.transpose()
-        return arr_2d
+def removeBorder(input,blockNumber,nBlocks=NBLOCKS,blockSize=BLOCKSIZE):
+	if blockNumber == 0:
+		return input[:blockSize,:,:]
+	elif blockNumber== nBlocks-1:
+		return input[1:,:,:]
+	else:
+		return input[1:blockSize+1,:,:]
 		
-	def compressed_storage(self, arr_2d):
-        directory = 'compressed'
-        output = 'output'
-        CRS = sparse.csr_matrix(arr_2d, dtype='float32')
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        if not os.path.exists(output):
-            os.makedirs(output)
-        sparse.save_npz("compressed/CRS.npz", CRS)
-   
-    '''Returns sparse matrix with Non-zero stored 
-    elements in Compressed Sparse Row format'''
-	def load_compressed(self):
-        filename = "compressed/CRS.npz"
-        try:
-            CRS_RAM = open(filename, 'r')
-        except:
-            print('Cannot open', filename)
-            return 0
-        else:
-            CRS_RAM = sparse.load_npz(filename)
-            return CRS_RAM
-            
-    def get_no_of_blocks(self, arr_2d):
-        arr_int = []
-        for i in range(1, 11):
-            block_size = arr_2d.shape[0] / i
-            if float(block_size).is_integer():
-                arr_int.append(i)
-        block_size = arr_int[-1]
-        print("No of blocks = ", block_size)
-        print()
-        return block_size
+# D = operationArgumentDic  arguments required for specific operations.		
+def operationTask(input,operation,D):
+	if operation=="dilation":
+		return ndimage.grey_dilation(input, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])
+	elif operation=="closing":
+		return ndimage.binary_closing(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+	else:
+		return input
+		
+		
+# if you array is not compressed then call this method for subblock	
+def get3dBlock(input,blockNumber,nBlocks=NBLOCKS,blockSize=BLOCKSIZE,fakeGhost=FG):
+	startIndex = blockSize*blockNumber-1
+	endIndex = startIndex + blockSize + 2
+	if startIndex<0:
+			startIndex =0	
+	if endIndex > input.shape[0]:
+		endIndex = input.shape[0]
+		
+	return input[startIndex:endIndex,:,:]
 	
+#input: compressed array,block number, extra border output 3d array block.	
+def get3DblockFromCompressed(input,jump,border,blockNumber,axisSize=Y):	 
+	startIndex = blockNumber*jump - border
+	endIndex = startIndex + jump + 2*border	
+	if startIndex<0:
+			startIndex =0	
+	if endIndex > input.shape[0]:
+		endIndex = input.shape[0]
+	block_2d = input[startIndex:endIndex,:].toarray()
+	nz = (endIndex-startIndex)/axisSize	
+	return np.rollaxis(np.dstack(np.split(block_2d,nz)),-1)
+
+# border and jump calculation for compressed array to 3d sub block	
+def getJumpAndBorder(fakeGhost=FG,axisSize=Y,blockSize=BLOCKSIZE):
+	return axisSize*blockSize,axisSize*fakeGhost
+		
+# input:3d array output:csc compressed matrix, if matrix is sparse otherwise none	
+def getCompressed(input):	
+	return sparse.csc_matrix(input.reshape(X*Y,Z))	
+
+	
+#if matrix sparse then block operation happen
+def sparsedOperation(input,operation,file,operationArgumentDic):
+	input = getCompressed(input)
+	for i in range(NBLOCKS):
+		jump,border = getJumpAndBorder()
+		block3d = get3DblockFromCompressed(input,jump,border,blockNumber=i)
+		output = operationTask(block3d,operation,operationArgumentDic)
+		removeBorder(output,i).tofile(file)
+	
+
+# if matrix is dense and compression not happen then block operation		
+def denseOperation(input,operation,file,operationArgumentDic):
+	for i in range(NBLOCKS):			
+		block3d = get3dBlock(input,blockNumber=i)
+		output = operationTask(block3d,operation,operationArgumentDic)
+		removeBorder(output,i).tofile(file)
+	
+	
+#based on axis size and block size return number of block and new blockSize such that even partion happened. 		
+def getNumberOfBlock(blockSize=BLOCKSIZE,axisSize=X):
+	while(axisSize % blockSize!=0):
+		blockSize -= 1
+	BLOCKSIZE = blockSize
+	return axisSize // blockSize , blockSize
+	
+# if more than 50% value are zero then matrix is sparse	
+def isSparse(input):
+	return (np.count_nonzero(input)/input.size)<0.51
+	
+	
+#will set Global variables with respect to file..	
+def setGlobalValue(input,blockSize,fakeGhost):
+	X = input.shape[0]
+	Y = input.shape[1]
+	Z = input.shape[2]
+	BLOCKSIZE = blockSize
+	FG = fakeGhost	
+	SPARSED = isSparse(input)
+	NBLOCKS = getNumberOfBlock()
+	#print(X,Y,Z,BLOCKSIZE,FG,SPARSED,NBLOCKS)
+	
+	
+# this method will call by every operation..		
+def main(input,blockSize,fakeGhost,operation="nothing",operationArgumentDic=""):
+	
+	setGlobalValue(input,blockSize,fakeGhost)
+	file = open(operation, "wb")
+	if SPARSED:
+		sparsedOperation(input,operation,file,operationArgumentDic)		
+	else:		
+		denseOperation(input,operation,file,operationArgumentDic)
+	file.close()	
+	return getDataFromBinaryFile(filename=operation)
+
+
+	
+
 	
