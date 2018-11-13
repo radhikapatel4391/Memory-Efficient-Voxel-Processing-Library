@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import sparse
 from scipy import ndimage
-
+import os
 
 #Global variables for file....which will reset by setGlobalValue function based on image..
 X,Y,Z = 200,200,200
@@ -13,14 +13,15 @@ FG = 1
 
 def getDataFromBinaryFile(filename,shape=(X,Y,Z)):
 	try:
-		merging = open(filename, 'r')		
+		file = open(filename, 'r')		
 	except:
 		print('Cannot open', filename)
 		return 0
 	else:
-		#merging = np.memmap(filename,shape=shape,dtype=np.float64)
-		#np.save("output.npy", merging)
-		return np.memmap(filename,shape=shape,dtype=np.float64)
+		#merging = np.memmap(filename,shape=shape,dtype=np.float64)		
+		np.save("output.npy", np.memmap(filename,shape=shape,dtype=np.float64))
+		file.close()
+		return np.load("output.npy")
 		
 def removeBorder(input,blockNumber,nBlocks=NBLOCKS,blockSize=BLOCKSIZE):
 	if blockNumber == 0:
@@ -74,6 +75,7 @@ def getCompressed(input):
 	
 #if matrix sparse then block operation happen
 def sparsedOperation(input,operation,file,operationArgumentDic):
+	print(".............sparsedmethod called")
 	input = getCompressed(input)
 	for i in range(NBLOCKS):
 		jump,border = getJumpAndBorder()
@@ -84,6 +86,7 @@ def sparsedOperation(input,operation,file,operationArgumentDic):
 
 # if matrix is dense and compression not happen then block operation		
 def denseOperation(input,operation,file,operationArgumentDic):
+	print(".............dense called................")
 	for i in range(NBLOCKS):			
 		block3d = get3dBlock(input,blockNumber=i)
 		output = operationTask(block3d,operation,operationArgumentDic)
@@ -111,15 +114,17 @@ def setGlobalValue(input,blockSize,fakeGhost):
 	FG = fakeGhost	
 	SPARSED = isSparse(input)
 	NBLOCKS = getNumberOfBlock()
-	#print(X,Y,Z,BLOCKSIZE,FG,SPARSED,NBLOCKS)
+	print(X,Y,Z,BLOCKSIZE,FG,SPARSED,NBLOCKS)
+	return SPARSED
 	
 	
 # this method will call by every operation..		
 def main(input,blockSize,fakeGhost,operation="nothing",operationArgumentDic=""):
 	
-	setGlobalValue(input,blockSize,fakeGhost)
+	s = setGlobalValue(input,blockSize,fakeGhost)
 	file = open(operation, "wb")
-	if SPARSED:
+	if s:
+		print(s)
 		sparsedOperation(input,operation,file,operationArgumentDic)		
 	else:		
 		denseOperation(input,operation,file,operationArgumentDic)
