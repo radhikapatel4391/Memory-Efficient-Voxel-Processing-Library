@@ -2,21 +2,26 @@ import numpy as np
 from scipy import sparse
 from scipy import ndimage
 import os
-
+from memory import Memory
 
 class VoxelProcessing:
 
-	def __init__(self,input,blockSize,fakeGhost,operation="nothing",operationArgumentDic=""):
+	def __init__(self,input,blockSize,fakeGhost,operation="nothing",operationArgumentDic="",makeFloat32=True):
 		self.__X = input.shape[0]
 		self.__Y = input.shape[1]
 		self.__Z = input.shape[2]
-		self.__input = input		
+		if makeFloat32:
+			self.__input = np.float32(input)
+		else:
+			self.__input = input
 		self.__fakeGhost = fakeGhost	
 		self.__sparsed = self.isSparse(input)
 		self.__nBlocks,self.__blockSize = self.getNumberOfBlock(input.shape[0],blockSize)
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
 		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"blockSize: ",self.__blockSize,"fakeGhost: ",self.__fakeGhost,"sparsed: ",self.__sparsed,"nBlocks: ",self.__nBlocks)
+		self.M = Memory()
+		self.M.add_mem()#.....................................................................................................
 		
 	# if more than 50% value are zero then matrix is sparse	
 	def isSparse(self,input):
@@ -37,27 +42,35 @@ class VoxelProcessing:
 			self.__sparsedOperation(file)		
 		else:		
 			self.__denseOperation(file)
-		file.close()	
+		file.close()
+		self.M.add_mem()#.....................................................................................................	
 		return self.__getDataFromBinaryFile(filename=self.__operation)
 		
 	#if matrix sparse then block operation happen
 	def __sparsedOperation(self,file):
-		print(".............sparsedmethod called")
+		print(".............sparsed method called............")
 		input = self.__getCompressed()
+		total = input.data.nbytes + input.indptr.nbytes + input.indices.nbytes
+		mem =  total / 1000000000
+		print("Memory size after compression = ", mem, "Gb")
 		for i in range(self.__nBlocks):
 			jump,border = self.__getJumpAndBorder()
 			block3d = self.__get3DblockFromCompressed(input,jump,border,blockNumber=i)
 			output = self.__operationTask(block3d)
 			self.__removeBorder(output,i).tofile(file)
+			self.M.add_mem()#.....................................................................................................
 	
 
 	# if matrix is dense and compression not happen then block operation		
 	def __denseOperation(self,file):
-		print(".............dense called................")
+		print(".............dense method called................")		
+		mem =  self.__input.nbytes / 1000000000
+		print("Memory size after compression = ", mem, "Gb") #it will same as input if makeFloat32=false
 		for i in range(self.__nBlocks):			
 			block3d = self.__get3dBlock(self.__input,blockNumber=i)
 			output = self.__operationTask(block3d)
 			self.__removeBorder(output,i).tofile(file)
+			self.M.add_mem()#.....................................................................................................
 			
 	# input:3d array output:csc compressed matrix, if matrix is sparse otherwise none	
 	def __getCompressed(self):	
@@ -71,7 +84,7 @@ class VoxelProcessing:
 				startIndex =0	
 		if endIndex > input.shape[0]:
 			endIndex = input.shape[0]
-			
+		self.M.add_mem()#.....................................................................................................	
 		return input[startIndex:endIndex,:,:]
 	
 	#input: compressed array,block number, extra border output 3d array block.	
@@ -84,8 +97,8 @@ class VoxelProcessing:
 		if endIndex > input.shape[0]:
 			endIndex = input.shape[0]
 		block_2d = input[startIndex:endIndex,:].toarray()		
-		nz = block_2d.shape[0]/axisSize
-		#return np.dstack(np.split(block_2d,nz))
+		nz = block_2d.shape[0]/axisSize		
+		self.M.add_mem()#.....................................................................................................
 		return np.rollaxis(np.dstack(np.split(block_2d,nz)),-1)
 		
 	# border and jump calculation for compressed array to 3d sub block	
@@ -96,6 +109,7 @@ class VoxelProcessing:
 	# D = operationArgumentDic  arguments required for specific operations.		
 	def __operationTask(self,input):
 		D=self.__operationArgumentDic
+		self.M.add_mem()#.....................................................................................................
 		if self.__operation=="dilation":
 			return ndimage.grey_dilation(input, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])
 		elif self.__operation=="closing":
@@ -104,6 +118,7 @@ class VoxelProcessing:
 			return input
 
 	def __removeBorder(self,input,blockNumber):
+		self.M.add_mem()#.....................................................................................................
 		if blockNumber == 0:
 			return input[:self.__blockSize,:,:]
 		elif blockNumber == (self.__nBlocks - 1):
@@ -119,10 +134,14 @@ class VoxelProcessing:
 			print('Cannot open', filename)
 			return 0
 		else:
-			#merging = np.memmap(filename,shape=shape,dtype=np.float64)		
-			np.save("output.npy", np.memmap(filename,shape=shape,dtype=np.float64))
+			if makeFloat32:
+				np.save("output.npy", np.memmap(filename,shape=shape,dtype=np.float32))
+			else:
+				np.save("output.npy", np.memmap(filename,shape=shape,dtype = self.__input.dtype))	
+			
 			file.close()
-			return np.load("output.npy")
+			self.M.add_mem()#.....................................................................................................			
+			return np.load("output.npy", mmap_mode="r"),self.M
 		
 	
 	
