@@ -1,4 +1,4 @@
-import subprocess as su
+import subprocess
 
 class Memory:
 	def __init__(self):
@@ -9,7 +9,7 @@ class Memory:
 		Adds the current free memory to a list
 		'''
 		cmd = "free -m" + "|" +  "awk '{ print $4 }'" + "|" + "sed -n 3p"
-		output = su.getstatusoutput(cmd)
+		output = subprocess.getstatusoutput(cmd)
 		self.__memoryList.append(int(output[1]))
 
 	def print_memory_usage(self):
