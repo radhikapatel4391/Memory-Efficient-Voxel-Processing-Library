@@ -7,41 +7,44 @@ import os
 import psutil
 
 structure = np.ones((3,3,3))
-#generating sparse array of different size...
-input = random(40000,200,density=0.5,dtype="float64")
-input = input.todense()
-input = np.array(input)
-input = np.reshape(input,(200,200,200))
-#............
-
-
-
-#...............
-
-print("\nNothing testing....")
-output = vc.nothing(input,fakeGhost=3)
-print("result: ",(input==output).all())
-
-
-
-#.......test1.sparse.........
-print("\ngrey_dilation VoxelProcessind")
-output = vc.grey_dilation(input,fakeGhost=3,structure=structure)
-#......
-print("\ngrey_dilation Default")
-d = ndimage.grey_dilation(input,structure=structure)
-print("\nresult: ",(d==output).all())
-
-
-#.............test2. dense.......
+#.............test1. dense.......
 filename = 'gyroidUniform.npy'   		
 input = np.load(filename, mmap_mode="r")
 
-#..............
+
+
+print("..............................dense..............................................")
+#Nothing..............
+print("\n nothing testing...")
+output = vc.nothing(input,blockSize=50,fakeGhost=4)
+
+print("\nresult: ",(input==output).all())
+#......................................
+
+#grey_dilation..............
 print("\ngrey_dilation VoxelProcessind")
-output = vc.grey_dilation(input,fakeGhost=3,structure=structure)
-# #......
+output = vc.grey_dilation(input,structure=structure)
 print("\ngrey_dilation Default")
 d = ndimage.grey_dilation(input,structure=structure)
 
+print("\nresult: ",(d==output).all())
+#......................................
+
+print("..............................Sparse..............................................")
+#Sparse.....................................................Sparse.......................
+input = random(500,560000,density=0.3,dtype="float64")
+input = input.todense()
+input = np.array(input)
+input = np.reshape(input,(500,700,800))
+
+#Nothing..................
+print("\n sparse_nothing testing...")
+output = vc.nothing(input,blockSize=50,fakeGhost=4)
+print("\nresult: ",(input==output).all())
+
+#grey_dilation..............
+print("\ngrey_dilation VoxelProcessind")
+output = vc.grey_dilation(input,structure=structure)
+print("\ngrey_dilation Default")
+d = ndimage.grey_dilation(input,structure=structure)
 print("\nresult: ",(d==output).all())
