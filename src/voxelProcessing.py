@@ -10,6 +10,8 @@ class VoxelProcessing:
 		self.__X = input.shape[0]
 		self.__Y = input.shape[1]
 		self.__Z = input.shape[2]
+		self.__makeFloat32 = makeFloat32
+		print("Original input Size: ",input.nbytes/1000000000, "GB")
 		if makeFloat32:
 			self.__input = np.float32(input)
 		else:
@@ -19,7 +21,7 @@ class VoxelProcessing:
 		self.__nBlocks,self.__blockSize = self.getNumberOfBlock(input.shape[0],blockSize)
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
-		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"blockSize: ",self.__blockSize,"fakeGhost: ",self.__fakeGhost,"sparsed: ",self.__sparsed,"nBlocks: ",self.__nBlocks)
+		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"blockSize: ",self.__blockSize,"fakeGhost: ",self.__fakeGhost,"sparsed: ",self.__sparsed,"nBlocks: ",self.__nBlocks)		
 		self.M = Memory()
 		self.M.add_mem()#.....................................................................................................
 		
@@ -134,7 +136,7 @@ class VoxelProcessing:
 			print('Cannot open', filename)
 			return 0
 		else:
-			if makeFloat32:
+			if self.__makeFloat32:
 				np.save("output.npy", np.memmap(filename,shape=shape,dtype=np.float32))
 			else:
 				np.save("output.npy", np.memmap(filename,shape=shape,dtype = self.__input.dtype))	

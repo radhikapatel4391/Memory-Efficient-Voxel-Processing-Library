@@ -4,7 +4,7 @@ import time as t
 import numpy as np
 from scipy import ndimage
 import os
-import psutil
+
 
 structure = np.ones((3,3,3))
 #.............test1. dense.......
@@ -18,7 +18,7 @@ print("..............................dense......................................
 print("\n nothing testing...")
 output = vc.nothing(input,blockSize=50,fakeGhost=4)
 
-print("\nresult: ",(input==output).all())
+#print("\nresult: ",(input==output).all())
 #......................................
 
 #grey_dilation..............
@@ -27,7 +27,7 @@ output = vc.grey_dilation(input,structure=structure)
 print("\ngrey_dilation Default")
 d = ndimage.grey_dilation(input,structure=structure)
 
-print("\nresult: ",(d==output).all())
+#print("\nresult: ",(d==output).all())
 #......................................
 
 print("..............................Sparse..............................................")
@@ -40,11 +40,11 @@ input = np.reshape(input,(500,700,800))
 #Nothing..................
 print("\n sparse_nothing testing...")
 output = vc.nothing(input,blockSize=50,fakeGhost=4)
-print("\nresult: ",(input==output).all())
+#print("\nresult: ",(input==output).all())
 
 #grey_dilation..............
 print("\ngrey_dilation VoxelProcessind")
 output = vc.grey_dilation(input,structure=structure)
 print("\ngrey_dilation Default")
 d = ndimage.grey_dilation(input,structure=structure)
-print("\nresult: ",(d==output).all())
+#print("\nresult: ",(d==output).all())
