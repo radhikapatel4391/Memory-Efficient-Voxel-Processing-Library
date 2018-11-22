@@ -1,10 +1,9 @@
 import subprocess
 
 class Memory:
-	def __init__(self,test=True):
+	def __init__(self):
 		self.__memoryList = []
-		if test:
-			print("test true")
+		
 
 	def add_mem(self):
 		'''
