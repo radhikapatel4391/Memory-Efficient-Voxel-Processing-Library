@@ -3,10 +3,11 @@ from scipy import sparse
 from scipy import ndimage
 import os
 from memory import Memory
+from tempfile import TemporaryFile
 
 class VoxelProcessing:
 
-	def __init__(self,input,blockSize,fakeGhost,operation="nothing",operationArgumentDic="",makeFloat32=True):
+	def __init__(self,input,blockSize,fakeGhost,makeFloat32=True,operation="nothing",operationArgumentDic=""):
 		self.__X = input.shape[0]
 		self.__Y = input.shape[1]
 		self.__Z = input.shape[2]
@@ -22,8 +23,8 @@ class VoxelProcessing:
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
 		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"blockSize: ",self.__blockSize,"fakeGhost: ",self.__fakeGhost,"sparsed: ",self.__sparsed,"nBlocks: ",self.__nBlocks)		
-		self.M = Memory()
-		self.M.add_mem()#.....................................................................................................
+		#self.M = Memory()
+		#self.M.add_mem()#.....................................................................................................
 		
 	# if more than 50% value are zero then matrix is sparse	
 	def isSparse(self,input):
@@ -41,12 +42,12 @@ class VoxelProcessing:
 	def main(self):		
 		file = open(self.__operation, "wb")
 		if self.__sparsed:			
-			self.__sparsedOperation(file)		
+			outputDtype = self.__sparsedOperation(file)		
 		else:		
-			self.__denseOperation(file)
+			outputDtype = self.__denseOperation(file)
 		file.close()
-		self.M.add_mem()#.....................................................................................................	
-		return self.__getDataFromBinaryFile(filename=self.__operation)
+		#self.M.add_mem()#.....................................................................................................	
+		return self.__getDataFromBinaryFile(filename=self.__operation,outputDtype=outputDtype)
 		
 	#if matrix sparse then block operation happen
 	def __sparsedOperation(self,file):
@@ -59,8 +60,11 @@ class VoxelProcessing:
 			jump,border = self.__getJumpAndBorder()
 			block3d = self.__get3DblockFromCompressed(input,jump,border,blockNumber=i)
 			output = self.__operationTask(block3d)
-			self.__removeBorder(output,i).tofile(file)
-			self.M.add_mem()#.....................................................................................................
+			ans = self.__removeBorder(output,i)
+			ans.tofile(file)
+			outputDtype = ans.dtype
+		return outputDtype
+			#self.M.add_mem()#.....................................................................................................
 	
 
 	# if matrix is dense and compression not happen then block operation		
@@ -71,8 +75,11 @@ class VoxelProcessing:
 		for i in range(self.__nBlocks):			
 			block3d = self.__get3dBlock(self.__input,blockNumber=i)
 			output = self.__operationTask(block3d)
-			self.__removeBorder(output,i).tofile(file)
-			self.M.add_mem()#.....................................................................................................
+			ans = self.__removeBorder(output,i)
+			ans.tofile(file)
+			outputDtype = ans.dtype
+		return outputDtype
+			#self.M.add_mem()#.....................................................................................................
 			
 	# input:3d array output:csc compressed matrix, if matrix is sparse otherwise none	
 	def __getCompressed(self):	
@@ -86,7 +93,7 @@ class VoxelProcessing:
 				startIndex =0	
 		if endIndex > input.shape[0]:
 			endIndex = input.shape[0]
-		self.M.add_mem()#.....................................................................................................	
+		#self.M.add_mem()#.....................................................................................................	
 		return input[startIndex:endIndex,:,:]
 	
 	#input: compressed array,block number, extra border output 3d array block.	
@@ -100,7 +107,7 @@ class VoxelProcessing:
 			endIndex = input.shape[0]
 		block_2d = input[startIndex:endIndex,:].toarray()		
 		nz = block_2d.shape[0]/axisSize		
-		self.M.add_mem()#.....................................................................................................
+		#self.M.add_mem()#.....................................................................................................
 		return np.rollaxis(np.dstack(np.split(block_2d,nz)),-1)
 		
 	# border and jump calculation for compressed array to 3d sub block	
@@ -108,27 +115,19 @@ class VoxelProcessing:
 		axisSize=self.__Y
 		return axisSize*self.__blockSize,axisSize*self.__fakeGhost
 
-	# D = operationArgumentDic  arguments required for specific operations.		
-	def __operationTask(self,input):
-		D=self.__operationArgumentDic
-		self.M.add_mem()#.....................................................................................................
-		if self.__operation=="dilation":
-			return ndimage.grey_dilation(input, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])
-		elif self.__operation=="closing":
-			return ndimage.binary_closing(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
-		else:
-			return input
+	
 
 	def __removeBorder(self,input,blockNumber):
-		self.M.add_mem()#.....................................................................................................
+		#self.M.add_mem()#.....................................................................................................
 		if blockNumber == 0:
-			return input[:self.__blockSize,:,:]
+			ans = input[:self.__blockSize,:,:]
 		elif blockNumber == (self.__nBlocks - 1):
-			return input[self.__fakeGhost:,:,:]
+			ans = input[self.__fakeGhost:,:,:]
 		else:
-			return input[self.__fakeGhost:self.__blockSize+self.__fakeGhost,:,:]
+			ans = input[self.__fakeGhost:self.__blockSize+self.__fakeGhost,:,:]		
+		return ans
 				
-	def __getDataFromBinaryFile(self,filename):
+	def __getDataFromBinaryFile(self,filename,outputDtype):
 		shape=(self.__X,self.__Y,self.__Z)
 		try:
 			file = open(filename, 'r')		
@@ -136,16 +135,51 @@ class VoxelProcessing:
 			print('Cannot open', filename)
 			return 0
 		else:
-			if self.__makeFloat32:
-				np.save("output.npy", np.memmap(filename,shape=shape,dtype=np.float32))
-			else:
-				np.save("output.npy", np.memmap(filename,shape=shape,dtype = self.__input.dtype))	
-			
-			file.close()
-			self.M.add_mem()#.....................................................................................................			
-			return np.load("output.npy", mmap_mode="r"),self.M
-		
+			tempfile = np.memmap(filename,shape=shape,dtype = outputDtype)			
+			file.close()									
+			return tempfile
 	
+	# D = operationArgumentDic  arguments required for specific operations.		
+	def __operationTask(self,input):
+		D=self.__operationArgumentDic
+		#self.M.add_mem()#.....................................................................................................
+		
+		if self.__operation=="binary_closing":	
+			return ndimage.binary_closing(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+		elif self.__operation=="binary_dilation":
+			return ndimage.binary_dilation(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+		elif self.__operation=="binary_erosion":
+			return ndimage.binary_erosion(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+		elif self.__operation=="binary_fill_holes":
+			return ndimage.binary_fill_holes(input, structure=D["structure"],output=D["output"], origin=D["origin"])
+		elif self.__operation=="binary_hit_or_miss":
+			return ndimage.binary_hit_or_miss(input, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
+		elif self.__operation=="binary_opening":
+			return ndimage.binary_opening(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+		elif self.__operation=="binary_propagation":			
+			return ndimage.binary_propagation(input, structure=D["structure"],output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"])
+		elif self.__operation=="black_tophat":
+			return ndimage.black_tophat(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="grey_dilation":
+			return ndimage.grey_dilation(input, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])
+		elif self.__operation=="grey_closing":
+			return ndimage.grey_closing(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="grey_erosion":
+			return ndimage.grey_erosion(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="grey_opening":
+			return ndimage.grey_opening(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="morphological_gradient":
+			return ndimage.morphological_gradient(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="morphological_laplace":
+			return ndimage.morphological_laplace(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="white_tophat":
+			return ndimage.white_tophat(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+		elif self.__operation=="intMultiply":
+			return input*D["scalar"]
+		
+		else:
+			return input
+			
 	
 		
 		
