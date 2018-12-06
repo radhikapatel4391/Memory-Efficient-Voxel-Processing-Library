@@ -1,24 +1,28 @@
-import voxel as vc
-from scipy.sparse import random
-import time as t
-import numpy as np
-from scipy import ndimage
-import os
-import psutil
+import subprocess
 
-#pip install -U memory_profiler
-# input = random(160000,4000,density=0.5,dtype="float64")
-# input = input.todense()
-# input = np.array(input)
-# input = np.reshape(input,(400,400,4000))
-# print(input.shape,input.dtype,input.size,input.nbytes)
-@profile
-def main():
-	filename = 'gyroidUniform.npy'	
-	input = np.load(filename, mmap_mode="r")
-	structure = np.ones((3,3,3))	
-	#output = vc.grey_dilation(input,structure=structure)
-	output = ndimage.grey_dilation(input,structure=structure)
+class Memory:
+	def __init__(self):
+		self.__memoryList = []
+		
 
-if __name__ == '__main__':
-	main()
+	def add_mem(self):
+		'''
+		Adds the current free memory to a list
+		'''
+		cmd = "free -m" + "|" +  "awk '{ print $4 }'" + "|" + "sed -n 3p"
+		output = subprocess.getstatusoutput(cmd)
+		self.__memoryList.append(int(output[1]))
+
+	def print_memory_usage(self):
+		l = len(self.__memoryList)
+		total = sum(self.__memoryList[1:l])
+		avg = total //(l - 1)
+		maxMemory = max(self.__memoryList[1:l])
+		print("Average Memory Usage = ", self.__memoryList[0] - avg, "MB")
+		print("Maximum Memory Usage = ", maxMemory, "MB")
+		print()
+		
+	def getmemoryList(self):
+		return self.__memoryList
+		
+

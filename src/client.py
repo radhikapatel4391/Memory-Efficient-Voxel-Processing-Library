@@ -125,20 +125,20 @@ print("\nresult: ",(d==output).all())
 print("..............................Sparse..............................................")
 
 
-input = random(200,40000,density=0.3,dtype="float64")
+input = random(400,160000,density=0.3,dtype="float64")
 input = input.todense()
 input = np.array(input)
-input = np.reshape(input,(200,200,200))
+input = np.reshape(input,(400,400,400))
 
 
 #0.Nothing..............
 print("\n nothing testing...")
-output = vc.nothing(input,makeFloat32=False)
+output = vc.nothing(input,blockSize=40,makeFloat32=False)
 print("\nresult: ",(input==output).all())
 print(output.dtype,input.dtype)
 #1.grey_dilation..............
 print("\ngrey_dilation VoxelProcessind")
-output = vc.grey_dilation(input,structure=structure,makeFloat32=False)
+output = vc.grey_dilation(input,structure=structure,blockSize=40,makeFloat32=False)
 print("\ngrey_dilation Default")
 d = ndimage.grey_dilation(input,structure=structure)
 print("\nresult: ",(d==output).all())

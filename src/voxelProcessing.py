@@ -2,8 +2,9 @@ import numpy as np
 from scipy import sparse
 from scipy import ndimage
 import os
-from memory import Memory
-from tempfile import TemporaryFile
+import time as t
+#from memory import Memory
+#from tempfile import TemporaryFile
 
 class VoxelProcessing:
 
@@ -57,26 +58,38 @@ class VoxelProcessing:
 		mem =  total / 1000000000
 		print("Memory size after compression = ", mem, "Gb")
 		for i in range(self.__nBlocks):
+			start_time = t.time()
 			jump,border = self.__getJumpAndBorder()
 			block3d = self.__get3DblockFromCompressed(input,jump,border,blockNumber=i)
+			print("getblock:    ",i," : ",(t.time() - start_time))
+			start_time = t.time()
 			output = self.__operationTask(block3d)
+			print("operation:    ",i," : ",(t.time() - start_time))
+			start_time = t.time()
 			ans = self.__removeBorder(output,i)
 			ans.tofile(file)
+			print("tofile:    ",i," : ",(t.time() - start_time))
 			outputDtype = ans.dtype
 		return outputDtype
 			#self.M.add_mem()#.....................................................................................................
 	
 
 	# if matrix is dense and compression not happen then block operation		
-	def __denseOperation(self,file):
+	def __denseOperation(self,file):		
 		print(".............dense method called................")		
 		mem =  self.__input.nbytes / 1000000000
-		print("Memory size after compression = ", mem, "Gb") #it will same as input if makeFloat32=false
-		for i in range(self.__nBlocks):			
+		print("Memory size after compression = ", mem, "Gb") #it will same as input if makeFloat32=false		
+		for i in range(self.__nBlocks):	
+			start_time = t.time()
 			block3d = self.__get3dBlock(self.__input,blockNumber=i)
+			print("getblock:    ",i," : ",(t.time() - start_time))
+			start_time = t.time()
 			output = self.__operationTask(block3d)
-			ans = self.__removeBorder(output,i)
+			print("Operation:    ",i," : ",(t.time() - start_time))
+			start_time = t.time()
+			ans = self.__removeBorder(output,i)			
 			ans.tofile(file)
+			print("toFile:    ",i," : ",(t.time() - start_time))
 			outputDtype = ans.dtype
 		return outputDtype
 			#self.M.add_mem()#.....................................................................................................
@@ -128,6 +141,7 @@ class VoxelProcessing:
 		return ans
 				
 	def __getDataFromBinaryFile(self,filename,outputDtype):
+		start_time = t.time()			
 		shape=(self.__X,self.__Y,self.__Z)
 		try:
 			file = open(filename, 'r')		
@@ -136,7 +150,8 @@ class VoxelProcessing:
 			return 0
 		else:
 			tempfile = np.memmap(filename,shape=shape,dtype = outputDtype)			
-			file.close()									
+			file.close()
+			print("returnfile:     ",(t.time() - start_time))
 			return tempfile
 	
 	# D = operationArgumentDic  arguments required for specific operations.		
