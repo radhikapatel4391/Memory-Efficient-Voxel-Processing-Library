@@ -3,145 +3,263 @@ from scipy import sparse
 from scipy import ndimage
 import os
 import time as t
-#from memory import Memory
-#from tempfile import TemporaryFile
+'''
+VoxelProcessing class implemented here which provide main() public method.
+main() method create block of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
+VoxelProcessing has input array as attribute along with morphological operation name, extra border, dictionary of parameters needed for morphological operation and number of blocks.
+'''
+
 
 class VoxelProcessing:
 
-	def __init__(self,input,blockSize,fakeGhost,makeFloat32=True,operation="nothing",operationArgumentDic=""):
-		self.__X = input.shape[0]
-		self.__Y = input.shape[1]
-		self.__Z = input.shape[2]
-		self.__makeFloat32 = makeFloat32
-		print("Original input Size: ",input.nbytes/1000000000, "GB")
-		if makeFloat32:
-			self.__input = np.float32(input)
+	def __init__(self,input_var,no_of_blocks,fakeghost,make_float32=True,operation="nothing",operationArgumentDic=""):
+		'''
+        Parameters
+        ----------
+        input_var            : type: 3D numpy array
+        no_of_blocks         : type: int, number of frame(block) you want in input array with respect to x axis. ex = 4
+        fakeghost            : type: int, extra border around block, generally with respect to structure element size. ex = 1
+        make_float32         : type: boolean, do you want to type cast input numpy array to float32.
+		operation            : type: string, morphological operation name, ex = binary_closing
+		operationArgumentDic : type: dictionary, parameters for respective operation
+		
+		Returns
+        -------
+		Object of this class with all atribute.
+        '''
+		self.__X = input_var.shape[0]
+		self.__Y = input_var.shape[1]
+		self.__Z = input_var.shape[2]
+		self.__make_float32 = make_float32
+		print("Original input_var Size: ",input_var.nbytes/1000000000, "GB")
+		if make_float32:
+			self.__input_var = np.float32(input_var)
 		else:
-			self.__input = input
-		self.__fakeGhost = fakeGhost	
-		self.__sparsed = self.isSparse(input)
-		self.__nBlocks,self.__blockSize = self.getNumberOfBlock(input.shape[0],blockSize)
+			self.__input_var = input_var
+		self.__fakeghost = fakeghost	
+		self.__sparsed = self.isSparse(input_var)
+		self.__block_size, self.__no_of_blocks = self.get_block_size(input_var.shape[0],no_of_blocks)
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
-		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"blockSize: ",self.__blockSize,"fakeGhost: ",self.__fakeGhost,"sparsed: ",self.__sparsed,"nBlocks: ",self.__nBlocks)		
-		#self.M = Memory()
-		#self.M.add_mem()#.....................................................................................................
+		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"block_size: ",self.__block_size,"fakeghost: ",self.__fakeghost,"sparsed: ",self.__sparsed,"no_of_blocks: ",self.__no_of_blocks)		
+		
 		
 	# if more than 50% value are zero then matrix is sparse	
-	def isSparse(self,input):
-		return (np.count_nonzero(input)/input.size)<0.51	
+	def isSparse(self,input_var):
+		'''
+		check input array is sparse or not. Greater then 50% value are zero then consider as sparsed.
+        Parameters
+        ----------
+        input_var            : type: 3D numpy array
+        
+		Returns
+        -------
+		boolean value : True if more then 50% value are zeros.
+						False if more then 50% value are nonZeros.
+        '''
+		return (np.count_nonzero(input_var)/input_var.size)<0.51	
 		
-	#based on axis size and block size return number of block and new blockSize such that even partion happened. 		
-	def getNumberOfBlock(self,axisSize,blockSize):		
-		while(axisSize % blockSize!=0):
-			blockSize -= 1
+	#based on x axis size and no_of_blocks return new number of block and block_size such that even partion happened. 		
+	def get_block_size(self,axisSize,no_of_blocks):
+		'''
+		find blocksize based on given no of blocks such that block size become round value.
+        Parameters
+        ----------
+        axisSize     : x axis value in input array.
+		no_of_blocks : number of blocks you want
+        
+		Returns
+        -------
+		block_size    : type: int,each block size 
+		no_of_blocks  : type: int,possible number of block such that it evenly divide array
+        '''
 		
-		return axisSize //blockSize,blockSize
+		while(axisSize % no_of_blocks != 0 ):
+			no_of_blocks -= 1
+		
+		return axisSize //no_of_blocks,no_of_blocks
 	
 	
-	# this method will call by every operation..		
-	def main(self):		
+	# this method will call by every morphological operation..		
+	def main(self):
+		'''
+		Based on object parameter it perform our approach. create block then perform morphological operation and return processed array.    
+        
+		Returns
+        -------
+		outputArr : type: numpy array, Based on morphological operation you perform return, output array.
+        '''
 		file = open(self.__operation, "wb")
 		if self.__sparsed:			
 			outputDtype = self.__sparsedOperation(file)		
 		else:		
 			outputDtype = self.__denseOperation(file)
-		file.close()
-		#self.M.add_mem()#.....................................................................................................	
+		file.close()		
 		return self.__getDataFromBinaryFile(filename=self.__operation,outputDtype=outputDtype)
 		
-	#if matrix sparse then block operation happen
+	#if matrix sparse then this method will be called
 	def __sparsedOperation(self,file):
-		print(".............sparsed method called............")
-		input = self.__getCompressed()
-		total = input.data.nbytes + input.indptr.nbytes + input.indices.nbytes
+		'''
+		if input array is sparsed then it will first do compression and then create blocks and perform operation on each.   
+        Parameters
+        ----------
+        file     : type: file object, in which you want to write binary output file of each block.
+		Returns
+        -------
+		outputDtype : type: data type, of output array after morphological operation.
+        '''
+		print(".............sparsedOperation  called................")	
+		input_var = self.__getCompressed()
+		total = input_var.data.nbytes + input_var.indptr.nbytes + input_var.indices.nbytes
 		mem =  total / 1000000000
-		print("Memory size after compression = ", mem, "Gb")
-		for i in range(self.__nBlocks):
-			start_time = t.time()
+		print("compressed input_var Size: ", mem, "Gb")
+		for i in range(self.__no_of_blocks):			
 			jump,border = self.__getJumpAndBorder()
-			block3d = self.__get3DblockFromCompressed(input,jump,border,blockNumber=i)
-			print("getblock:    ",i," : ",(t.time() - start_time))
-			start_time = t.time()
-			output = self.__operationTask(block3d)
-			print("operation:    ",i," : ",(t.time() - start_time))
-			start_time = t.time()
-			ans = self.__removeBorder(output,i)
-			ans.tofile(file)
-			print("tofile:    ",i," : ",(t.time() - start_time))
+			block3d = self.__get3DblockFromCompressed(input_var,jump,border,blockNumber=i)						
+			output = self.__operationTask(block3d)			
+			ans = self.__removeBorder(output,i)			
+			ans.tofile(file)		
 			outputDtype = ans.dtype
 		return outputDtype
-			#self.M.add_mem()#.....................................................................................................
+			
 	
 
-	# if matrix is dense and compression not happen then block operation		
-	def __denseOperation(self,file):		
-		print(".............dense method called................")		
-		mem =  self.__input.nbytes / 1000000000
-		print("Memory size after compression = ", mem, "Gb") #it will same as input if makeFloat32=false		
-		for i in range(self.__nBlocks):	
+	# if matrix is dense then this method will be called		
+	def __denseOperation(self,file):
+		'''
+		if input array is dense then it will not do compression, directly create blocks and perform operation on each.   
+        Parameters
+        ----------
+        file     : type: file object, in which you want to write binary output file of each block.
+		Returns
+        -------
+		outputDtype : type: data type, of output array after morphological operation.
+        '''
+		print(".............denseOperation called................")		
+		mem =  self.__input_var.nbytes / 1000000000
+		print("Memory size after compression = ", mem, "Gb") #it will same as input_var if make_float32=false		
+		for i in range(self.__no_of_blocks):	
 			start_time = t.time()
-			block3d = self.__get3dBlock(self.__input,blockNumber=i)
-			print("getblock:    ",i," : ",(t.time() - start_time))
-			start_time = t.time()
-			output = self.__operationTask(block3d)
-			print("Operation:    ",i," : ",(t.time() - start_time))
-			start_time = t.time()
+			block3d = self.__get3dBlock(self.__input_var,blockNumber=i)			
+			output = self.__operationTask(block3d)			
 			ans = self.__removeBorder(output,i)			
-			ans.tofile(file)
-			print("toFile:    ",i," : ",(t.time() - start_time))
+			ans.tofile(file)			
 			outputDtype = ans.dtype
 		return outputDtype
-			#self.M.add_mem()#.....................................................................................................
 			
-	# input:3d array output:csc compressed matrix, if matrix is sparse otherwise none	
-	def __getCompressed(self):	
-		return sparse.csc_matrix(self.__input.reshape(self.__X*self.__Y,self.__Z))	
+			
+	# input_var:3d array, output:csc compressed matrix	
+	def __getCompressed(self):
+		'''
+		return CSC compressed array.   
+        Parameters
+        ----------
+        Object input_var which will be 3D		
+		Returns
+        -------
+		outputDtype : type: csc compressed matrix (2D) 
+        '''	
+		return sparse.csc_matrix(self.__input_var.reshape(self.__X*self.__Y,self.__Z))	
 	
-	# if you array is not compressed then call this method for subblock	
-	def __get3dBlock(self,input,blockNumber):
-		startIndex = (self.__blockSize*blockNumber)-self.__fakeGhost
-		endIndex = startIndex + self.__blockSize + 2*self.__fakeGhost
+	# if your array is not compressed then call this method to get ith 3dblock.	
+	def __get3dBlock(self,input_var,blockNumber):
+		'''
+		from 3d array return ith frame with respect to x axis with extra border.  
+        Parameters
+        ----------
+        input_var  	: type: 3d input array
+		blockNumber : type: int, ith block which you want with respect to x axis, or ith frame. ex= 5
+		
+		Returns
+        -------
+		3dblock     : type: array, ith frame, size: (1,y,z) with fakegost(extra border)
+        '''
+		startIndex = (self.__block_size*blockNumber)-self.__fakeghost
+		endIndex = startIndex + self.__block_size + 2*self.__fakeghost
 		if startIndex<0:
 				startIndex =0	
-		if endIndex > input.shape[0]:
-			endIndex = input.shape[0]
-		#self.M.add_mem()#.....................................................................................................	
-		return input[startIndex:endIndex,:,:]
+		if endIndex > input_var.shape[0]:
+			endIndex = input_var.shape[0]
+		
+		return input_var[startIndex:endIndex,:,:]
 	
-	#input: compressed array,block number, extra border output 3d array block.	
-	def __get3DblockFromCompressed(self,input,jump,border,blockNumber):	
+	#input_var: compressed array,block number, extra border output 3d array block.	
+	def __get3DblockFromCompressed(self,input_var,jump,border,blockNumber):
+		'''
+		from comprassesd 2d array return ith frame with respect to x axis.  
+        Parameters
+        ----------
+        input_var  	: type: 2d comprassed array
+		jump        : type: int, blocksize in 2d compreesed array for 3d block.
+		border      : type: int, calculated extra border value in 2d array for 3d block
+		blockNumber : type: int, ith block which you want with respect to x axis, or ith frame. ex= 5
+		
+        Returns
+		-------
+		3dblock     : type: array, ith frame, size: (1,y,z) with fakegost(extra border)
+        '''
 		axisSize=self.__Y
 		startIndex = blockNumber*jump - border
 		endIndex = startIndex + jump + 2*border	
 		if startIndex<0:
 				startIndex =0	
-		if endIndex > input.shape[0]:
-			endIndex = input.shape[0]
-		block_2d = input[startIndex:endIndex,:].toarray()		
+		if endIndex > input_var.shape[0]:
+			endIndex = input_var.shape[0]
+		block_2d = input_var[startIndex:endIndex,:].toarray()		
 		nz = block_2d.shape[0]/axisSize		
-		#self.M.add_mem()#.....................................................................................................
 		return np.rollaxis(np.dstack(np.split(block_2d,nz)),-1)
 		
-	# border and jump calculation for compressed array to 3d sub block	
+	# border and jump calculation for compressed array to 3d ith block	
 	def __getJumpAndBorder(self):
+		'''
+		form comprassesd 2d array find blocksize and fakeghost value for 3d block  
+        Parameters
+        ----------
+        input_var  	: type: 2d comprassed array	
+		
+        Returns
+		-------
+		jump        : type: int, blocksize in 2d compreesed array for 3d block.
+		border      : type: int, calculated extra border value in 2d array for 3d block
+        '''
 		axisSize=self.__Y
-		return axisSize*self.__blockSize,axisSize*self.__fakeGhost
+		return axisSize*self.__block_size,axisSize*self.__fakeghost
 
 	
 
-	def __removeBorder(self,input,blockNumber):
-		#self.M.add_mem()#.....................................................................................................
+	def __removeBorder(self,input_var,blockNumber):
+		'''
+		form 3d block remove extra border(fakeghost cells).  
+        Parameters
+        ----------
+        input_var  	: type: 3d numpy array, output array (ith block) after mprpological operation
+		blockNumber : type: int, ith block.
+		
+        Returns
+		-------
+		3dblock     : type: array, block without extra border(fakeghost cells).
+        '''
 		if blockNumber == 0:
-			ans = input[:self.__blockSize,:,:]
-		elif blockNumber == (self.__nBlocks - 1):
-			ans = input[self.__fakeGhost:,:,:]
+			ans = input_var[:self.__block_size,:,:]
+		elif blockNumber == (self.__no_of_blocks - 1):
+			ans = input_var[self.__fakeghost:,:,:]
 		else:
-			ans = input[self.__fakeGhost:self.__blockSize+self.__fakeGhost,:,:]		
+			ans = input_var[self.__fakeghost:self.__block_size+self.__fakeghost,:,:]		
 		return ans
 				
 	def __getDataFromBinaryFile(self,filename,outputDtype):
-		start_time = t.time()			
+		'''
+		create output numpy array from stored binarry file. 
+        Parameters
+        ----------
+        filename  	: type: string, filename in which you store each block output.
+		outputDtype : type: data type, morphological operation output data type.
+		
+        Returns
+		-------
+		finaloutput     : type: 3d array, output of operation whole array.
+        '''
+				
 		shape=(self.__X,self.__Y,self.__Z)
 		try:
 			file = open(filename, 'r')		
@@ -150,50 +268,58 @@ class VoxelProcessing:
 			return 0
 		else:
 			tempfile = np.memmap(filename,shape=shape,dtype = outputDtype)			
-			file.close()
-			print("returnfile:     ",(t.time() - start_time))
+			file.close()			
 			return tempfile
 	
-	# D = operationArgumentDic  arguments required for specific operations.		
-	def __operationTask(self,input):
+	# D = operationArgumentDic  paraeters required for specific operations.		
+	def __operationTask(self,input_var):
+		'''
+		perform respective moephological operation on input block.
+        Parameters
+        ----------
+        input_var  	: type: 3d numpy array, ith block.		
+		
+        Returns
+		-------
+		output     : type: 3d array, output of operation, ith block array.
+        '''
+		
+			
 		D=self.__operationArgumentDic
-		#self.M.add_mem()#.....................................................................................................
-		
 		if self.__operation=="binary_closing":	
-			return ndimage.binary_closing(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+			return ndimage.binary_closing(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_dilation":
-			return ndimage.binary_dilation(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+			return ndimage.binary_dilation(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_erosion":
-			return ndimage.binary_erosion(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+			return ndimage.binary_erosion(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_fill_holes":
-			return ndimage.binary_fill_holes(input, structure=D["structure"],output=D["output"], origin=D["origin"])
+			return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
 		elif self.__operation=="binary_hit_or_miss":
-			return ndimage.binary_hit_or_miss(input, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
+			return ndimage.binary_hit_or_miss(input_var, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
 		elif self.__operation=="binary_opening":
-			return ndimage.binary_opening(input, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
+			return ndimage.binary_opening(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_propagation":			
-			return ndimage.binary_propagation(input, structure=D["structure"],output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"])
+			return ndimage.binary_propagation(input_var, structure=D["structure"],output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"])
 		elif self.__operation=="black_tophat":
-			return ndimage.black_tophat(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.black_tophat(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="grey_dilation":
-			return ndimage.grey_dilation(input, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])
+			return ndimage.grey_dilation(input_var, structure=D["structure"],size=D["size"], footprint=D["footprint"],output=D["output"], mode=D["mode"], cval=D["cval"], origin=D["origin"])			
 		elif self.__operation=="grey_closing":
-			return ndimage.grey_closing(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.grey_closing(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="grey_erosion":
-			return ndimage.grey_erosion(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.grey_erosion(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="grey_opening":
-			return ndimage.grey_opening(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.grey_opening(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="morphological_gradient":
-			return ndimage.morphological_gradient(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.morphological_gradient(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="morphological_laplace":
-			return ndimage.morphological_laplace(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.morphological_laplace(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="white_tophat":
-			return ndimage.white_tophat(input, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
+			return ndimage.white_tophat(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="intMultiply":
-			return input*D["scalar"]
-		
+			return input_var*D["scalar"]		
 		else:
-			return input
+			return input_var # no operation performed....
 			
 	
 		
