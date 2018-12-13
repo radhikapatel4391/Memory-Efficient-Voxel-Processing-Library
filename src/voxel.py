@@ -16,14 +16,26 @@ Example:
 		fakeghost = extra border arround each block, generally proposnal to structuring element. default:1 or 2 
 		make_float32 = True/False , do you want to type casting to float32? default:True
 
-All method in this module are overload of morphological operation methods in scipy module with only 3 extra parameters..
-Parameters
-----------        
-no_of_blocks : type: int,default=4, number of frame(block) you want in input array with respect to x axis. ex = 4
-fakeghost    : type: int,default=1 or 2,extra border around block, generally with respect to structure element size. ex = 1
-make_float32 : type: boolean,default=True,do you want to type cast input numpy array to float32.
+This module provide total 16 different operation, first 14 operation are same as ,
+https://docs.scipy.org/doc/scipy/reference/ndimage.html here.
 
-    
+1)binary_dilation
+2)binary_erosion
+3)binary_closing
+4)binary_opening
+5)binary_hit_or_miss
+6)binary_propagation
+7)black_tophat
+8)grey_dilation
+9)grey_erosion
+10)grey_closing
+11)grey_opening
+12)morphological_gradient
+13)morphological_laplace
+14)white_tophat
+15)multiply (integer/float valut multiplication with each element.)
+16)nothing (not perform any operation just do blocking and merging.)
+
 '''
 
 
@@ -225,7 +237,7 @@ def white_tophat(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=N
 	v = VoxelProcessing(input_var,no_of_blocks,fakeghost,make_float32,operation="white_tophat",operationArgumentDic=operationArgumentDic)
 	return v.main()
 	
-def intMultiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
+def multiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
 	'''
 	return multiplication of each value in matrix with given scalar integer.
 	Parameters
@@ -233,7 +245,7 @@ def intMultiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1)
 	scalar : int/float value with you want to do matrix multiplication. 
 	'''
 	operationArgumentDic = {"scalar":scalar}
-	v = VoxelProcessing(input_var,no_of_blocks,fakeghost,make_float32,operation="intMultiply",operationArgumentDic=operationArgumentDic)
+	v = VoxelProcessing(input_var,no_of_blocks,fakeghost,make_float32,operation="multiply",operationArgumentDic=operationArgumentDic)
 	return v.main()
 
 #Not doing  any operation ...	

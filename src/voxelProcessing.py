@@ -6,8 +6,8 @@ import time as t
 import tempfile
 '''
 VoxelProcessing class implemented here which provide main() public method.
-main() method create block of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
-VoxelProcessing has input array as attribute along with morphological operation name, extra border, dictionary of parameters needed for morphological operation and number of blocks.
+main() method create blocks of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
+VoxelProcessing has input array as attribute along with that other attribute are, operation name and dictionary of parameters needed for that  operation plus number of blocks, extra border.
 '''
 
 
@@ -42,7 +42,7 @@ class VoxelProcessing:
 		self.__block_size, self.__no_of_blocks = self.get_block_size(input_var.shape[0],no_of_blocks)
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
-		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"block_size: ",self.__block_size,"fakeghost: ",self.__fakeghost,"sparsed: ",self.__sparsed,"no_of_blocks: ",self.__no_of_blocks)		
+		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"\nblock_size: ",self.__block_size,"\nfakeghost: ",self.__fakeghost,"\nsparsed: ",self.__sparsed,"\nno_of_blocks: ",self.__no_of_blocks,"\nmake_float32: ",make_float32,"\noperation: ",self.__operation)		
 		
 		
 	# if more than 50% value are zero then matrix is sparse	
@@ -58,7 +58,9 @@ class VoxelProcessing:
 		boolean value : True if more then 50% value are zeros.
 						False if more then 50% value are nonZeros.
         '''
-		return (np.count_nonzero(input_var)/input_var.size)<0.51	
+		temp = np.count_nonzero(input_var)/input_var.size
+		print("desity : ",temp)
+		return (temp)<0.51	
 		
 	#based on x axis size and no_of_blocks return new number of block and block_size such that even partion happened. 		
 	def get_block_size(self,axisSize,no_of_blocks):
@@ -109,7 +111,7 @@ class VoxelProcessing:
         -------
 		outputDtype : type: data type, of output array after morphological operation.
         '''
-		print(".............sparsedOperation  called................")	
+		print("sparsed Operation called................")	
 		input_var = self.__getCompressed()
 		total = input_var.data.nbytes + input_var.indptr.nbytes + input_var.indices.nbytes
 		mem =  total / 1000000000
@@ -136,7 +138,7 @@ class VoxelProcessing:
         -------
 		outputDtype : type: data type, of output array after morphological operation.
         '''
-		print(".............denseOperation called................")		
+		print("dense Operation called................")		
 		mem =  self.__input_var.nbytes / 1000000000
 		print("Memory size after compression = ", mem, "Gb") #it will same as input_var if make_float32=false		
 		for i in range(self.__no_of_blocks):	
@@ -312,7 +314,7 @@ class VoxelProcessing:
 			return ndimage.morphological_laplace(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
 		elif self.__operation=="white_tophat":
 			return ndimage.white_tophat(input_var, structure=D["structure"], size=D["size"], footprint=D["footprint"],  output=D["output"], origin=D["origin"],mode=D["mode"], cval=D["cval"])
-		elif self.__operation=="intMultiply":
+		elif self.__operation=="multiply":
 			return input_var*D["scalar"]		
 		else:
 			return input_var # no operation performed....

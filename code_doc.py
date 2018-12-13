@@ -1,8 +1,8 @@
 voxelProcessing.py
 '''
 VoxelProcessing class implemented here which provide main() public method.
-main() method create block of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
-VoxelProcessing has input array as attribute along with morphological operation name, extra border, dictionary of parameters needed for morphological operation and number of blocks.
+main() method create blocks of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
+VoxelProcessing has input array as attribute along with that other attribute are, operation name and dictionary of parameters needed for that  operation plus number of blocks, extra border.
 '''
 class VoxelProcessing:
 
@@ -276,7 +276,7 @@ def white_tophat(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=N
 	'''
 	
 	
-def intMultiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
+def multiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
 	'''
 	return multiplication of each value in matrix with given scalar integer.
 	Parameters
@@ -301,13 +301,47 @@ def nothing(input_var,no_of_blocks=4,fakeghost=1,make_float32=True):
 	output          : 3d numpy array, same as input.
 	'''
 
-testScript.py
+test.py
 
 '''
-test script which perform all  morphological operation to check all operation provided by module working as expected or not.
-On console print true if output is as expected(same as default scipy module.)
-Along with that it print time taken by default scipy module and using our approach.
-To test sparsed method generate dense array with 0.3 desity of 400x400x400.
-To test dense method generate dense array with 0.7 desity of 400x400x400.
+test script which perform all  operation to check all operation provided by module working as expected or not.
+It prints time taken by default scipy module and using our approach.
+
+Golab variable creation for testing.....
+PL = parameter list, no_of_blocks=PL[0],fakeghost=PL[1] 
+input_svar = To test sparsed method generate Global sparse array,  with 0.3 desity of size 400x400x400.
+input_svar = To test dense method generate Global dense array, input_dvar, with 0.7 desity of size 400x400x400.
+
+Note : did Globaly over setUp() and tearDown() because input array creation take more time then performing operation plus we have no need of creation before each testing operation.
+
+No of tests
+Sparse Input - test_sparse_operation()
+	- Different no_of_blocks               -  __test_blocks4_7()
+	- Different fakeghostSize              -  __test_fakeghost1_2_3_4_10()
+	- make_float32_True - which is default -  __test_nothing_make_float32_True()
+	
+Dense Input - test_dense_operation()
+	- Different no_of_blocks               -  __test_blocks4_7()
+	- Different fakeghostSize              -  __test_fakeghost1_2_3_4_10()
+	- make_float32_True - which is default -  __test_nothing_make_float32_True()
+	
+		each of three call this methods,
+			__test_binary_dilation_operation()
+			__test_binary_erosion_operation()
+			__test_binary_closing_operation()
+			__test_binary_opening_operation()
+			__test_binary_hit_or_miss_operation()
+			__test_binary_propagation_operation()
+			__test_black_tophat_operation()
+			__test_grey_dilation_operation()
+			__test_grey_erosion_operation()
+			__test_grey_closing_operation()
+			__test_grey_opening_operation()
+			__test_morphological_gradient_operation()
+			__test_morphological_laplace_operation()
+			__test_white_tophat_operation()
+			__test_multiply_operation()
+			__test_nothing_operation()
 
 '''
+
