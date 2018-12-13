@@ -80,18 +80,20 @@ def binary_opening(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  stru
 	return v.main()	
 	
 
-	
-def binary_fill_holes(input_var,no_of_blocks=4,fakeghost=1,make_float32=True, structure=None, output=None, origin=0):
-	'''
-	 overload of binary_fill_holes methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
-	'''
-	if fakeghost<=1:
-		if structure is not None:
-			fakeghost = structure.shape[0]//2
+'''
+you can't perform this operation locally need information of whole image...so result might be wrong....
+'''	
+# def binary_fill_holes(input_var,no_of_blocks=4,fakeghost=4,make_float32=True, structure=None, output=None, origin=0):
+	# '''
+	 # overload of binary_fill_holes methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	# '''
+	# if fakeghost<=1:
+		# if structure is not None:
+			# fakeghost = structure.shape[0]//2
 		
-	operationArgumentDic = {"structure":structure,"output":output,"origin":origin}	
-	v = VoxelProcessing(input_var,no_of_blocks,fakeghost,make_float32,operation="binary_fill_holes",operationArgumentDic=operationArgumentDic)
-	return v.main()	
+	# operationArgumentDic = {"structure":structure,"output":output,"origin":origin}	
+	# v = VoxelProcessing(input_var,no_of_blocks,fakeghost,make_float32,operation="binary_fill_holes",operationArgumentDic=operationArgumentDic)
+	# return v.main()	
 	
 def binary_hit_or_miss(input_var, no_of_blocks=4,fakeghost=1,make_float32=True, structure1=None, structure2=None, output=None, origin1=0, origin2=None):
 	'''

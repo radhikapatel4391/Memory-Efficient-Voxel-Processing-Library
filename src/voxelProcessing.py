@@ -3,6 +3,7 @@ from scipy import sparse
 from scipy import ndimage
 import os
 import time as t
+import tempfile
 '''
 VoxelProcessing class implemented here which provide main() public method.
 main() method create block of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
@@ -89,13 +90,13 @@ class VoxelProcessing:
         -------
 		outputArr : type: numpy array, Based on morphological operation you perform return, output array.
         '''
-		file = open(self.__operation, "wb")
+		file = tempfile.TemporaryFile(mode="wb")
 		if self.__sparsed:			
 			outputDtype = self.__sparsedOperation(file)		
 		else:		
 			outputDtype = self.__denseOperation(file)
-		file.close()		
-		return self.__getDataFromBinaryFile(filename=self.__operation,outputDtype=outputDtype)
+		#file.close()		
+		return self.__getDataFromBinaryFile(file,outputDtype=outputDtype)
 		
 	#if matrix sparse then this method will be called
 	def __sparsedOperation(self,file):
@@ -247,12 +248,12 @@ class VoxelProcessing:
 			ans = input_var[self.__fakeghost:self.__block_size+self.__fakeghost,:,:]		
 		return ans
 				
-	def __getDataFromBinaryFile(self,filename,outputDtype):
+	def __getDataFromBinaryFile(self,file,outputDtype):
 		'''
 		create output numpy array from stored binarry file. 
         Parameters
         ----------
-        filename  	: type: string, filename in which you store each block output.
+        file  	: type: file object, file in which you store each block output.
 		outputDtype : type: data type, morphological operation output data type.
 		
         Returns
@@ -261,15 +262,10 @@ class VoxelProcessing:
         '''
 				
 		shape=(self.__X,self.__Y,self.__Z)
-		try:
-			file = open(filename, 'r')		
-		except:
-			print('Cannot open', filename)
-			return 0
-		else:
-			tempfile = np.memmap(filename,shape=shape,dtype = outputDtype)			
-			file.close()			
-			return tempfile
+		tempfile = np.memmap(file,shape=shape,dtype = outputDtype)			
+		file.close()			
+		return tempfile
+		
 	
 	# D = operationArgumentDic  paraeters required for specific operations.		
 	def __operationTask(self,input_var):
@@ -284,7 +280,7 @@ class VoxelProcessing:
 		output     : type: 3d array, output of operation, ith block array.
         '''
 		
-			
+		#can't do binary_fill_holes operation because it is not local...need whole image information. 
 		D=self.__operationArgumentDic
 		if self.__operation=="binary_closing":	
 			return ndimage.binary_closing(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
@@ -292,8 +288,8 @@ class VoxelProcessing:
 			return ndimage.binary_dilation(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_erosion":
 			return ndimage.binary_erosion(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
-		elif self.__operation=="binary_fill_holes":
-			return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
+		# elif self.__operation=="binary_fill_holes":
+			# return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
 		elif self.__operation=="binary_hit_or_miss":
 			return ndimage.binary_hit_or_miss(input_var, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
 		elif self.__operation=="binary_opening":
