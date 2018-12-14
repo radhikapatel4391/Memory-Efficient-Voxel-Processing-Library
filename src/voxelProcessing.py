@@ -290,8 +290,8 @@ class VoxelProcessing:
 			return ndimage.binary_dilation(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_erosion":
 			return ndimage.binary_erosion(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
-		# elif self.__operation=="binary_fill_holes":
-			# return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
+		elif self.__operation=="binary_fill_holes":
+			return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
 		elif self.__operation=="binary_hit_or_miss":
 			return ndimage.binary_hit_or_miss(input_var, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
 		elif self.__operation=="binary_opening":
