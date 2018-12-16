@@ -1,21 +1,57 @@
 # Memory-Efficient-Voxel-Processing-Library
 
-Introduction:
+In 3D printing, modelling of the object is done with the use of computer-aided design, which is in the form of voxels. The ability to use voxel-based geometry for non-complex and robust morphological processing is an important element of 3D simulation. Without a voxel data structure, we cannot represent an object or structure in three-dimensional space. However, the memory footprint scales with the cell size of the volume being described, leading to large voxel data structure, leading to very large matrices required to represent the data structure. This tends to occupy considerably more memory than something such as a tessellated surface model.
 
-Files can be so large that it is impractical to load all of their content into memory at once. This problem is often a computational bottleneck in large computed-imaging problems . Matrices that contain mostly zero values are called sparse, distinct from matrices where most of the values are non-zero, called dense. It is computationally expensive to represent and work with sparse matrices as though they are dense, and much improvement in performance can be achieved by using representations and operations that specifically handle the matrix sparsity.
+To address this issue, existing technologies were researched and developed module voxel using NumPy and SciPy modules, which provide morphological operations using divide and conquer.
+Software and Module Requirements
 
-Goal:
+This novel approach is compatible with Python 3.0 and later versions. It also make use of the NumPy and SciPy Python libraries.
+Implementation
 
-To create an API for processing and handling large Sparse Matrices There are many efficient ways to store and work with sparse matrices and our approach is based on split and merge technique
+For ease of use, functional coding was used in the implementation of the approach. Only the created library, voxel.py, needs to be imported by the client. voxel.py inherently imports the voxelProcessing library and the prerequisite libraries, which are SciPy and NumPy. 
 
-Approach:
+Voxel.py has 17 functions, 15 of which perform the same operations as the functions in the  Morphology section of the SciPy library and 2 are custom functions. The created morphological operations have the same names as the functions in the SciPy library for ease of use. The functions are as follows:
 
-Our approach allows to operate large Sparse matrices that would not fit into RAM memory as a whole . The idea is to store the Sparse Matrix in a compressed data structure and retrieve blocks of data from the compressed data structure and dynamically allocating memory and performing the Morphological operations.
+Binary Morphology
+binary_erosion(…)
+binary_dilation(…)
+binary_opening(…)
+binary_closing(…)
+binary_fill_holes(…)
+binary_hit_or_miss(…)
+binary_propagation(…)
 
-Space Complexity:
+Grey-scale Morphology
+grey_erosion(…)
+grey_dilation(…)
+grey_opening(…)
+grey_closing(…)
+morphological_gradient(…)
+morphological_laplace(…)
+white_tophat(…)
+black_tophat(…)
 
-Very large matrices require a lot of memory, and some very large matrices that we wish to work with are sparse.The matrix contained is sparse with many more zero values than data values. This is clearly a waste of memory resources as those zero values do not contain any information
+Custom Functions
+multiply(…)
+Integer/float value multiplication of each element with given scalar value.
+nothing(…)
+It does not perform any morphological or arithmetic operations. It just does blocking and merging, to verify that the algorithm works correctly in case the client makes any changes to main() in voxelProcessing.py
 
-Time Complexity:
+The parameters are as follows:
 
-Assuming a very large sparse matrix can be fit into memory, we will want to perform operations on this matrix. Simply, if the matrix contains mostly zero-values, i.e. no data, then performing operations across this matrix may take a long time where the bulk of the computation performed will involve adding or multiplying zero values together. This is a problem of increased time complexity of matrix operations that increases with the size of the matrix.
+input_var
+Type: 3D NumPy array
+Description: The input array
+no_of_blocks
+Type: int
+Description: The number of blocks (with respect to x-axis) into which to divide the
+original image. Default: 4
+fakeghost
+Type: int
+Description: The number of extra rows or ghost cells around around each block required for morphological operations, generally proportional to the structuring element. Default: 2
+make_float32
+Type: boolean
+Description: Whether to type-cast input array to float32. Default: True
+structure
+Type: NumPy 3D array
+Description: The structuring element to be used for the morphological operation.
