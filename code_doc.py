@@ -1,3 +1,63 @@
+Directory structure:
+Memory-Efficient-Voxel-Processing-Library
+|
+\---src
+|    |   demo.py # showing how to use voxel library functions 
+|    |   voxel.py # provide morphological operation using VoxelProcessing
+|    |   voxelProcessing.py #Implemented our divide and conquer based algorithm
+|    |
+|    +---unittest #unittest for voxel and voxelprocessing 's public methods
+|    |       
+|    |       run_all_tests.py      # execute all test... .py file 
+|    |       test.py #voxel module unittest with multiple different block and fakegost parameters value.
+|    |       test_binary_closing.py
+|    |       test_binary_dilation.py
+|    |       test_binary_erosion.py
+|    |       test_binary_fill_holes.py
+|    |       test_binary_hit_or_miss.py
+|    |       test_binary_opening.py
+|    |       test_binary_propagation.py
+|    |       test_black_tophat.py
+|    |       test_grey_closing.py
+|    |       test_grey_dilation.py
+|    |       test_grey_erosion.py
+|    |       test_grey_opening.py
+|    |       test_morphological_gradient.py
+|    |       test_morphological_laplace.py
+|    |       test_multiply.py
+|    |       test_nothing.py
+|    |       test_voxelProcessing.py 
+|    |       test_white_tophat.py
+|    |
++---learning # files created during implementation for different purpose just for future reference..
+|       3dShow.py
+|       client.py
+|       cv2ShowImage.py
+|       dense_client.py
+|       dev.py
+|       dilation comp.png
+|       gyroidUniform.npy
+|       IMG_20180925_092928870.png
+|       memory.py
+|       multiprocessingExample.py
+|       multiVoxel.py
+|       phase1_demo.py
+|       SavePIL.py
+|       sizecalculationTemp.py
+|       sizeTest.py
+|       sparse_client.py
+|       temp.py
+|       Voxel.py
+|       voxelProcessing.py
+|       Vxshow.py
+|						# Images which describe our algorithm
+|   Algorithm.jpg  
+|   AlgorithmSteps.jpg
+|   ApproachOverview.jpg
+|   code_doc.py
+|   README.md
+
+
 voxelProcessing.py
 '''
 VoxelProcessing class implemented here which provide main() public method.
@@ -206,14 +266,14 @@ make_float32 : type: boolean,default=True,do you want to type cast input numpy a
 
     
 '''
-def binary_dilation(input_var,no_of_blocks=4,fakeghost=1,make_float32=True, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False):
+def binary_dilation(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False):
 	'''
-	 overload of binary_dilation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of binary_dilation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 
-def binary_erosion(input_var,no_of_blocks=4,fakeghost=1,make_float32=True, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False):
+def binary_erosion(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False):
 	'''
-	 overload of binary_erosion methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of binary_erosion methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 def binary_closing(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, iterations=1, output=None, origin=0, mask=None, border_value=0, brute_force=False):
 	'''
@@ -223,30 +283,30 @@ def binary_opening(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  stru
 	'''
 	 overload of binary_opening methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
-def binary_fill_holes(input_var,no_of_blocks=4,fakeghost=1,make_float32=True, structure=None, output=None, origin=0):
+def binary_fill_holes(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, output=None, origin=0):
 	'''
-	 overload of binary_fill_holes methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of binary_fill_holes methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''	
-def binary_hit_or_miss(input_var, no_of_blocks=4,fakeghost=1,make_float32=True, structure1=None, structure2=None, output=None, origin1=0, origin2=None):
+def binary_hit_or_miss(input_var, no_of_blocks=4,fakeghost=2,make_float32=True, structure1=None, structure2=None, output=None, origin1=0, origin2=None):
 	'''
-	 overload of binary_hit_or_miss methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of binary_hit_or_miss methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
-def binary_propagation(input_var,no_of_blocks=4,fakeghost=1,make_float32=True, structure=None, mask=None, output=None, border_value=0, origin=0):
+def binary_propagation(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, mask=None, output=None, border_value=0, origin=0):
 	'''
-	 overload of binary_propagation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of binary_propagation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 def black_tophat(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
 	'''
 	 overload of black_tophat methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
-def grey_dilation(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
+def grey_dilation(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
 	'''
-	 overload of grey_dilation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of grey_dilation methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 	
-def grey_erosion(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
+def grey_erosion(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
 	'''
-	 overload of grey_erosion methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of grey_erosion methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 	
 def grey_closing(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
@@ -258,15 +318,15 @@ def grey_opening(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=N
 	 overload of grey_opening methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''	
 	
-def morphological_gradient(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
+def morphological_gradient(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
 	'''
-	 overload of morphological_gradient methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of morphological_gradient methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 	
 	
-def morphological_laplace(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
+def morphological_laplace(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=None, footprint=None, structure=None, output=None, mode='reflect', cval=0.0, origin=0):
 	'''
-	 overload of morphological_laplace methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=1,make_float32=True
+	 overload of morphological_laplace methods in scipy module with only 3 extra parameters, no_of_blocks=4,fakeghost=2,make_float32=True
 	'''
 	
 	
@@ -276,7 +336,7 @@ def white_tophat(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  size=N
 	'''
 	
 	
-def multiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
+def multiply(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,scalar=1):
 	'''
 	return multiplication of each value in matrix with given scalar integer.
 	Parameters
@@ -286,7 +346,7 @@ def multiply(input_var,no_of_blocks=4,fakeghost=1,make_float32=True,scalar=1):
 	
 
 #Not doing  any operation ...	
-def nothing(input_var,no_of_blocks=4,fakeghost=1,make_float32=True):
+def nothing(input_var,no_of_blocks=4,fakeghost=2,make_float32=True):
 	'''
 	for algorithm testing purpose to make sure blocking and retriving stored output work as expected if output is same as input.
 	Parameters

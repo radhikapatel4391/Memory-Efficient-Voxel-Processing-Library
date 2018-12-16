@@ -19,7 +19,7 @@ class VoxelProcessing:
         ----------
         input_var            : type: 3D numpy array
         no_of_blocks         : type: int, number of frame(block) you want in input array with respect to x axis. ex = 4
-        fakeghost            : type: int, extra border around block, generally with respect to structure element size. ex = 1
+        fakeghost            : type: int, extra border around block, generally with respect to structure element size. ex = 2
         make_float32         : type: boolean, do you want to type cast input numpy array to float32.
 		operation            : type: string, morphological operation name, ex = binary_closing
 		operationArgumentDic : type: dictionary, parameters for respective operation
@@ -39,12 +39,32 @@ class VoxelProcessing:
 			self.__input_var = input_var
 		self.__fakeghost = fakeghost	
 		self.__sparsed = self.isSparse(input_var)
-		self.__block_size, self.__no_of_blocks = self.get_block_size(input_var.shape[0],no_of_blocks)
+		self.__block_size, self.__no_of_blocks = self.claculate_block_size(input_var.shape[0],no_of_blocks)
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
 		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"\nblock_size: ",self.__block_size,"\nfakeghost: ",self.__fakeghost,"\nsparsed: ",self.__sparsed,"\nno_of_blocks: ",self.__no_of_blocks,"\nmake_float32: ",make_float32,"\noperation: ",self.__operation)		
 		
-		
+	def get_X(self):
+		return self.__X
+	def get_Y(self):
+		return self.__Y
+	def get_Z(self):
+		return self.__Z
+	def get_make_float32(self):
+		return self.__make_float32
+	def get_fakeghost(self):
+		return self.__fakeghost
+	def get_sparsed(self):
+		return self.__sparsed
+	def get_block_size(self):
+		return self.__block_size
+	def get_no_of_blocks(self):
+		return self.__no_of_blocks
+	def get_operation(self):
+		return self.__operation
+	def get_operationArgumentDic(self):
+		return self.__operationArgumentDic
+	
 	# if more than 50% value are zero then matrix is sparse	
 	def isSparse(self,input_var):
 		'''
@@ -60,10 +80,10 @@ class VoxelProcessing:
         '''
 		temp = np.count_nonzero(input_var)/input_var.size
 		print("desity : ",temp)
-		return (temp)<0.51	
+		return (temp)<0.50	
 		
 	#based on x axis size and no_of_blocks return new number of block and block_size such that even partion happened. 		
-	def get_block_size(self,axisSize,no_of_blocks):
+	def claculate_block_size(self,axisSize,no_of_blocks):
 		'''
 		find blocksize based on given no of blocks such that block size become round value.
         Parameters
@@ -282,7 +302,7 @@ class VoxelProcessing:
 		output     : type: 3d array, output of operation, ith block array.
         '''
 		
-		#can't do binary_fill_holes operation because it is not local...need whole image information. 
+		
 		D=self.__operationArgumentDic
 		if self.__operation=="binary_closing":	
 			return ndimage.binary_closing(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
@@ -290,7 +310,7 @@ class VoxelProcessing:
 			return ndimage.binary_dilation(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_erosion":
 			return ndimage.binary_erosion(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
-		elif self.__operation=="binary_fill_holes":
+		elif self.__operation=="binary_fill_holes": #the output might be different then scipy 
 			return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
 		elif self.__operation=="binary_hit_or_miss":
 			return ndimage.binary_hit_or_miss(input_var, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])
