@@ -1,11 +1,3 @@
-from scipy.sparse import random
-import time as t
-import numpy as np
-from scipy import ndimage
-import os,sys
-import unittest
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath("voxel.py"))))
-import voxel as vc
 '''
 test script which perform all  operation to check all operation provided by module working as expected or not.
 It prints time taken by default scipy module and using our approach.
@@ -49,9 +41,18 @@ Dense Input - test_dense_operation()
 			
 
 '''
+from scipy.sparse import random
+import time as t
+import numpy as np
+from scipy import ndimage
+import os,sys
+import unittest
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath("voxel.py"))))
+import voxel as vc
+
 
 PL=[4,2] #no_of_blocks=PL[0],fakeghost=PL[1]
-structure = np.ones((3,3,3))
+structure = ndimage.generate_binary_structure(3, 1) #np.ones((3,3,3)) 
 try:
 	input_dvar = np.load("dense_array.npy", mmap_mode="r")
 except:	

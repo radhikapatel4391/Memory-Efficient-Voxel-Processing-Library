@@ -1,3 +1,13 @@
+'''
+perform 7 (total 14) diffrent test on sparse and dense input array
+1)_default_value: structure = ndimage.generate_binary_structure(3, 1),make_float32=False,no_of_blocks=4,fakeghost=2
+2)_struct_ones: structure = np.ones((3,3,3)),other default
+3)_struct_zeros: structure = np.zeros((3,3,3)),other default
+4)_blocks_two: no_of_blocks=2,other default
+5)_blocks_ten: no_of_blocks=10,other default
+6)_fakeghost_one: fakeghost=1 ,other default : will turn to 2 because fakeghost need to be >=2
+7)_fakeghost_four: fakeghost=4 ,other default
+'''
 from scipy.sparse import random
 import time as t
 import numpy as np
@@ -11,8 +21,7 @@ structure = ndimage.generate_binary_structure(3, 1) #np.ones((3,3,3))
 try:
 	input_dvar = np.load("dense_array.npy", mmap_mode="r")
 except:	
-	print("creating dense input array will take time...")
-	structure = np.ones((3,3,3))
+	print("creating dense input array will take time...")	
 	input_dvar = random(400,160000,density=0.7,dtype="float64")
 	input_dvar = input_dvar.todense()
 	input_dvar = np.array(input_dvar)
@@ -32,7 +41,7 @@ except:
 	
 class TestBinaryclosing(unittest.TestCase):
 
-	def test_binary_closing_operation_sparse_input_default_value(self):		
+	def test_binary_closing_operation_sparse_input_default_value(self):	
 		print("\n test_binary_closing_operation_sparse_input_default_value...")		
 		v_output = vc.binary_closing(input_svar, structure=structure, make_float32=False)		
 		d_output = ndimage.binary_closing(input_svar, structure=structure,)			

@@ -13,10 +13,10 @@ Example:
 	here,input_var = numpy 3d array
 		structure = structure you want to use for morphological operation.
 		no_of_blocks = how many blocks(frame with respect to x axis) you want to make of original image. default:4 
-		fakeghost = extra border arround each block, generally proposnal to structuring element. default: 2 
+		fakeghost = extra border arround each block, generally proposnal to structuring element. default: 2 , It should >=2.
 		make_float32 = True/False , do you want to type casting to float32? default:True
 
-This module provide total 16 different operation, first 14 operation are same as ,
+This module provide total 16 different operation, first 14 operation are same as Scipy.ndimage module.
 
 1 binary_dilation()
 2 binary_erosion()
@@ -96,7 +96,7 @@ def binary_opening(input_var,no_of_blocks=4,fakeghost=2,make_float32=True,  stru
 	
 
 '''
-you can't perform this operation locally need information of whole image...so result might be wrong....
+you can't get same output as scipy.ndimage...
 '''	
 def binary_fill_holes(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, output=None, origin=0):
 	'''

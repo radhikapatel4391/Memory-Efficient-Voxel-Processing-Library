@@ -1,3 +1,8 @@
+'''
+test two public method of VoxelProcessing
+1) constructor __init__ : check each parameters set right or not?
+2) main() - check output is as expected or not?
+'''
 import numpy as np
 from scipy import sparse
 from scipy import ndimage

@@ -1,3 +1,11 @@
+'''
+perform 5 (total 10) diffrent test on sparse and dense input array
+1)_default_value: make_float32=False,no_of_blocks=4,fakeghost=2 default make_float32 is True but for testing result comparision make it true.
+2)_blocks_two: no_of_blocks=2,other default
+3)_blocks_ten: no_of_blocks=10,other default
+4)_fakeghost_one: fakeghost=1 ,other default : will turn to 2 because fakeghost need to be >=2
+5)_fakeghost_four: fakeghost=4 ,other default
+'''
 from scipy.sparse import random
 import time as t
 import numpy as np
@@ -11,8 +19,7 @@ import voxel as vc
 try:
 	input_dvar = np.load("dense_array.npy", mmap_mode="r")
 except:	
-	print("creating dense input array will take time...")
-	structure = np.ones((3,3,3))
+	print("creating dense input array will take time...")	
 	input_dvar = random(400,160000,density=0.7,dtype="float64")
 	input_dvar = input_dvar.todense()
 	input_dvar = np.array(input_dvar)

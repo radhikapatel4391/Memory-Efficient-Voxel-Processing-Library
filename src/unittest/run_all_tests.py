@@ -1,3 +1,6 @@
+'''
+for each method of voxel module there are seprate unittest file running them all togather.
+'''
 import os
 os.system('python test_voxelProcessing.py')
 os.system('python test_binary_dilation.py')

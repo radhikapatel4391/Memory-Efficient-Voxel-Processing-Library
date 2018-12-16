@@ -5,9 +5,9 @@ import os
 import time as t
 import tempfile
 '''
-VoxelProcessing class implemented here which provide main() public method.
-main() method create blocks of input numpy array and perform morphological operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
-VoxelProcessing has input array as attribute along with that other attribute are, operation name and dictionary of parameters needed for that  operation plus number of blocks, extra border.
+VoxelProcessing class implemented here, which provide main() public method.
+main() method create blocks of input numpy array and perform respective operation on each block. after finishing the operation on it, will store output of each block in the file and then read data from that file and return whole array as output.
+VoxelProcessing object has input array as attribute along with that other attribute are, operation name and dictionary of parameters needed for that operation plus number of blocks, extra border(fakeghost). 
 '''
 
 
@@ -19,11 +19,11 @@ class VoxelProcessing:
         ----------
         input_var            : type: 3D numpy array
         no_of_blocks         : type: int, number of frame(block) you want in input array with respect to x axis. ex = 4
-        fakeghost            : type: int, extra border around block, generally with respect to structure element size. ex = 2
-        make_float32         : type: boolean, do you want to type cast input numpy array to float32.
-		operation            : type: string, morphological operation name, ex = binary_closing
+        fakeghost            : type: int, extra border around block, generally with respect to structure element size. ex >= 2
+        make_float32         : type: boolean, do you want to type cast input numpy array to float32?
+		operation            : type: string,  operation name, ex = "binary_closing"
 		operationArgumentDic : type: dictionary, parameters for respective operation
-		
+		Note: if no_of_blocks value not divide image in even block then decrease till it do. 
 		Returns
         -------
 		Object of this class with all atribute.
@@ -43,7 +43,9 @@ class VoxelProcessing:
 		self.__operation = operation
 		self.__operationArgumentDic = operationArgumentDic
 		print("X: ",self.__X,"Y: ",self.__Y,"Z: ",self.__Z,"\nblock_size: ",self.__block_size,"\nfakeghost: ",self.__fakeghost,"\nsparsed: ",self.__sparsed,"\nno_of_blocks: ",self.__no_of_blocks,"\nmake_float32: ",make_float32,"\noperation: ",self.__operation)		
-		
+	'''
+	getters for all atribute except input_var
+	'''	
 	def get_X(self):
 		return self.__X
 	def get_Y(self):
@@ -310,7 +312,7 @@ class VoxelProcessing:
 			return ndimage.binary_dilation(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
 		elif self.__operation=="binary_erosion":
 			return ndimage.binary_erosion(input_var, structure=D["structure"], iterations=D["iterations"], output=D["output"], origin=D["origin"], mask=D["mask"], border_value=D["border_value"], brute_force=D["brute_force"])
-		elif self.__operation=="binary_fill_holes": #the output might be different then scipy 
+		elif self.__operation=="binary_fill_holes": #the output might be different then scipy.ndimage  
 			return ndimage.binary_fill_holes(input_var, structure=D["structure"],output=D["output"], origin=D["origin"])
 		elif self.__operation=="binary_hit_or_miss":
 			return ndimage.binary_hit_or_miss(input_var, structure1=D["structure1"],structure2=D["structure2"],output=D["output"], origin1=D["origin1"], origin2=D["origin2"])

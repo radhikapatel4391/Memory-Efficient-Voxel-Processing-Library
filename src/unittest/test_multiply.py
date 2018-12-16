@@ -1,3 +1,12 @@
+'''
+perform 6 (total 12) diffrent test on sparse and dense input array
+1)_default_value: scalar=5,make_float32=False,no_of_blocks=4,fakeghost=2 default scalar = 1 so make it 5..
+2)_scalar_float: scalar=5.5,other default
+3)_blocks_two: scalar=5, no_of_blocks=2,other default
+4)_blocks_ten: scalar=5, no_of_blocks=10,other default
+5)_fakeghost_one: scalar=5, fakeghost=1 ,other default : will turn to 2 because fakeghost need to be >=2
+6)_fakeghost_four: scalar=5, fakeghost=4 ,other default
+'''
 from scipy.sparse import random
 import time as t
 import numpy as np
@@ -11,8 +20,7 @@ import voxel as vc
 try:
 	input_dvar = np.load("dense_array.npy", mmap_mode="r")
 except:	
-	print("creating dense input array will take time...")
-	structure = np.ones((3,3,3))
+	print("creating dense input array will take time...")	
 	input_dvar = random(400,160000,density=0.7,dtype="float64")
 	input_dvar = input_dvar.todense()
 	input_dvar = np.array(input_dvar)
@@ -92,6 +100,12 @@ class TestMultiply(unittest.TestCase):
 		msgs = "test_multiply_operation_dense_input_default_value"
 		self.assertTrue((d_output==v_output).all(), msg=msgs)
 		
+	def test_multiply_operation_dense_input_scalar_float(self):		
+		print("\n test_multiply_operation_dense_input_scalar_float...")		
+		v_output = vc.multiply(input_dvar, scalar=5.5, make_float32=False)		
+		d_output = input_dvar*5.5		
+		msgs = "test_multiply_operation_dense_input_scalar_float"
+		self.assertTrue((d_output==v_output).all(), msg=msgs)
 	
 		
 	def test_multiply_operation_dense_input_blocks_two(self):		
