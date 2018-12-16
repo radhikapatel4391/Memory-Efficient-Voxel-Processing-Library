@@ -1,5 +1,3 @@
-from voxelProcessing import VoxelProcessing
-import numpy as np
 '''
 Prerequisite
 numpy 
@@ -37,6 +35,9 @@ This module provide total 16 different operation, first 14 operation are same as
 17 nothing() (not perform any operation just do blocking and merging.)
 Note: binary_fill_holes output might be different then scipy for some structuring elements in dense case. not recomanddede to use if not necessary .. 
 '''
+from voxelProcessing import VoxelProcessing
+import numpy as np
+
 
 
 def binary_dilation(input_var,no_of_blocks=4,fakeghost=2,make_float32=True, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False):
