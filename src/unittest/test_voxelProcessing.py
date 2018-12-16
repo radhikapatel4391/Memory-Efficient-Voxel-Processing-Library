@@ -6,6 +6,7 @@ test two public method of VoxelProcessing
 import numpy as np
 from scipy import sparse
 from scipy import ndimage
+from scipy.sparse import random
 import os
 import time as t
 import tempfile
